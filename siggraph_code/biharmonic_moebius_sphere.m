@@ -143,9 +143,9 @@ for i = 1:num_of_handles
 %     if i == 2 
 %         disp([Delta_X])
 %     end
-    X_total = X_total + Atual_Weight.*Delta_X;
-    Y_total = Y_total + Atual_Weight.*Delta_Y;
-    Z_total = Z_total + Atual_Weight.*Delta_Z;
+    X_total = X_total + Delta_X;
+    Y_total = Y_total + Delta_Y;
+    Z_total = Z_total + Delta_Z;
    
 end
 
