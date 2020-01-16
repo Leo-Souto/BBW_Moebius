@@ -109,7 +109,7 @@ Complex = X_C + Y_C*1i;
 
 
 for i = 1:num_of_handles
-    Atual_Weight = W_expanded(:,:,i)';
+    Current_Weight = W_expanded(:,:,i)';
     a = T_coefs(i,1);
     b = T_coefs(i,2);
     c = T_coefs(i,3);
@@ -137,9 +137,9 @@ for i = 1:num_of_handles
     y_sphere2 = -(4*X_C_n)./(X_C_n.^2 + Y_C_n.^2 + 4); 
     z_sphere2 = (4*Y_C_n)./(X_C_n.^2 + Y_C_n.^2 + 4);
     
-    Delta_X = Atual_Weight.*x_sphere2;
-    Delta_Y = Atual_Weight.*y_sphere2;
-    Delta_Z = Atual_Weight.*z_sphere2;
+    Delta_X = Current_Weight.*x_sphere2;
+    Delta_Y = Current_Weight.*y_sphere2;
+    Delta_Z = Current_Weight.*z_sphere2;
 %     if i == 2 
 %         disp([Delta_X])
 %     end
