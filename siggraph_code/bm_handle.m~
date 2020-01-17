@@ -16,8 +16,7 @@ classdef bm_handle < handle
             obj.tag = tag;
             obj.position = position;
             obj.new_position = position;
-            obj.mesh_position = mesh_position;
-            obj.new_mesh_position = mesh_position;
+            
             obj.type = type;
             obj.plot_tag = plot_tag;
         end

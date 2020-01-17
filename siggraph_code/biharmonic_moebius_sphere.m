@@ -6,27 +6,36 @@ function [new_image] = biharmonic_moebius_sphere(Image,V,F,handles, T_coefs, siz
 % data to the function
 num_of_handles = length(T_coefs(:,1));
 positions = [];
-% new_handle_order = {};
 is_conform = [];
 
 for i = 1:num_of_handles
+    disp(handles{i})
     switch handles{i}.type
         case 'Point'
             positions = cat(1,positions,handles{i}.new_position(1,:));
+        case 'Curved'
+            positions = cat(1,positions,handles{i}.new_mesh_position);
     end
 end
 point_indices = [];
+curved_bone_indices = [];
 for i = 1:num_of_handles
     switch handles{i}.type
         case 'Point'
             indice = dsearchn(positions,handles{i}.new_position(1,:));
             point_indices = [point_indices,indice];
 %             new_handle_order{end+1} = handles{i};
+        case 'Curved'
+            disp(handles{i}.new_mesh_position)
+            indice = dsearchn(positions,handles{i}.new_mesh_position);
+            curved_bone_indices = [curved_bone_indices; indice'];
     end
 end
-%computing spherical boundary conditions and biharminc weights
-[b,bc] = bm_boundary_conditions(V,F,equi2sphere(positions),point_indices,...
-    [],[],[],[]);
+V = [V; equi2sphere(positions)];
+F = convhull(V);
+%computing spherical boundary conditions and biharmonic weights
+[b,bc] = new_boundary_conditions(V,F,equi2sphere(positions),point_indices,...
+    [],[],curved_bone_indices,[]);
 if ~isempty(is_conform)
     W = biharmonic_bounded(V,F,b,bc,'POU',false,...
         'ShapePreserving',is_conform);
@@ -37,6 +46,9 @@ soma = sum(W,2);
 for i=1:num_of_handles
    W(:,i) = W(:,i)./soma; 
 end
+% figure;
+% trisurf(F,V(:,1),V(:,2),V(:,3),W(:,4))
+disp(W)
 %% irregular mesh to grid weight interpolation
 
 V_equi = sphere2equi(V);
@@ -49,7 +61,7 @@ y = linspace(pi/2-1e-6,-pi/2+1e-6,nx/2);
 [X,Y]=meshgrid(x,y);
 %%%%%%%%tem que trocar griddata por scattered interpolant pra ganhar
 %%%%%%%%performance
-Interpolant = scatteredInterpolant(V_equi,W(:,1))
+Interpolant = scatteredInterpolant(V_equi,W(:,1));
 non_expanded = []; %from irregular to regular mesh
 for i  = 1:num_of_handles
     Interpolant.Values = W(:,i);

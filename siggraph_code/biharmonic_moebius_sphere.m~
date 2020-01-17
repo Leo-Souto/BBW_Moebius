@@ -6,52 +6,67 @@ function [new_image] = biharmonic_moebius_sphere(Image,V,F,handles, T_coefs, siz
 % data to the function
 num_of_handles = length(T_coefs(:,1));
 positions = [];
-% new_handle_order = {};
 is_conform = [];
 
 for i = 1:num_of_handles
     switch handles{i}.type
         case 'Point'
             positions = cat(1,positions,handles{i}.new_position(1,:));
+        case 'Curved'
+            positions = cat(1,positions,handles{i}.new_mesh_position);
     end
 end
 point_indices = [];
+curved_bone_indices = [];
 for i = 1:num_of_handles
     switch handles{i}.type
         case 'Point'
             indice = dsearchn(positions,handles{i}.new_position(1,:));
             point_indices = [point_indices,indice];
 %             new_handle_order{end+1} = handles{i};
+        case 'Curved'
+            indice = dsearchn(positions,handles{i}.new_mesh_position);
+            curved_bone_indices = [curved_bone_indices; indice'];
     end
 end
-%computing spherical boundary conditions and biharminc weights
-[b,bc] = bm_boundary_conditions(V,F,equi2sphere(positions),point_indices,...
-    [],[],[],[]);
+V = [V; equi2sphere(positions)];
+F = convhull(V);
+%computing spherical boundary conditions and biharmonic weights
+[b,bc] = new_boundary_conditions(V,F,equi2sphere(positions),point_indices,...
+    [],[],curved_bone_indices,[]);
 if ~isempty(is_conform)
     W = biharmonic_bounded(V,F,b,bc,'POU',false,...
         'ShapePreserving',is_conform);
 else
     W = biharmonic_bounded(V,F,b,bc,'POU',false);
 end
+soma = sum(W,2);
+for i=1:num_of_handles
+   W(:,i) = W(:,i)./soma; 
+end
+figure;
+trisurf(F,V
 %% irregular mesh to grid weight interpolation
 
 V_equi = sphere2equi(V);
 [SV,~,~] = remove_duplicate_vertices(V_equi,1e-7);
 index = dsearchn(SV,V_equi);
-% W = W(index,:);
+W = W(index,:);
 nx = 150;
 x = linspace(-pi+1e-6,pi-1e-6,nx);
 y = linspace(pi/2-1e-6,-pi/2+1e-6,nx/2);
 [X,Y]=meshgrid(x,y);
 %%%%%%%%tem que trocar griddata por scattered interpolant pra ganhar
 %%%%%%%%performance
+Interpolant = scatteredInterpolant(V_equi,W(:,1));
 non_expanded = []; %from irregular to regular mesh
 for i  = 1:num_of_handles
-    non_expanded(:,:,i) = griddata(SV(:,1),SV(:,2),W(:,i),X,Y);
+    Interpolant.Values = W(:,i);
+    non_expanded(:,:,i) = Interpolant(X,Y);
 end
-h = figure;
-figure(h)
-trisurf(F,V(:,1),V(:,2)
+% h = figure;
+% figure(h)
+% trisurf(F,V(:,1),V(:,2),V(:,3),W(:,1))
 %from small regular, to final size weights
 nx = size_final(2);
 ny = size_final(1);
@@ -102,8 +117,8 @@ Y_C =(2*z_sphere)./(x_sphere + 1);
 Complex = X_C + Y_C*1i;
 
 
-for i = 1:num_of_handles
-    Atual_Weight = W_expanded(:,:,i)';
+for i = 1:3
+    Current_Weight = W_expanded(:,:,i)';
     a = T_coefs(i,1);
     b = T_coefs(i,2);
     c = T_coefs(i,3);
@@ -131,15 +146,15 @@ for i = 1:num_of_handles
     y_sphere2 = -(4*X_C_n)./(X_C_n.^2 + Y_C_n.^2 + 4); 
     z_sphere2 = (4*Y_C_n)./(X_C_n.^2 + Y_C_n.^2 + 4);
     
-    Delta_X = Atual_Weight.*x_sphere2;
-    Delta_Y = Atual_Weight.*y_sphere2;
-    Delta_Z = Atual_Weight.*z_sphere2;
+    Delta_X = Current_Weight.*x_sphere2;
+    Delta_Y = Current_Weight.*y_sphere2;
+    Delta_Z = Current_Weight.*z_sphere2;
 %     if i == 2 
 %         disp([Delta_X])
 %     end
-    X_total = X_total + Atual_Weight.*Delta_X;
-    Y_total = Y_total + Atual_Weight.*Delta_Y;
-    Z_total = Z_total + Atual_Weight.*Delta_Z;
+    X_total = X_total + Delta_X;
+    Y_total = Y_total + Delta_Y;
+    Z_total = Z_total + Delta_Z;
    
 end
 
