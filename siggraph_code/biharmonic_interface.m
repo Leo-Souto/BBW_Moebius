@@ -616,7 +616,6 @@ end
 handles.new_handle_order = handles.new_handle_order(~cellfun('isempty',handles.new_handle_order));
 handles.num_of_handles = length(handles.new_handle_order);
 handles.all_handles = handles.new_handle_order;
-disp(handles.point_index_clusters)
 
 %% Here we take care of nearby endpoints
 handles.coupled_endpoints = cell(handles.num_of_handles,1);
@@ -780,7 +779,6 @@ for i =1:handles.num_of_handles
         end
     end
 end
-disp(handles.new_handle_order)
 
 new_bones = 0;
 for i = 1:handles.num_of_handles

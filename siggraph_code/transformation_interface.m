@@ -329,8 +329,7 @@ elseif isequal(handles.all_handles{i}.type,'Curved')
     handles.all_handles{i}.new_position = [P1_n;P2_n;P3_n];
     handles.T_coefs(i,:) = Calculate_Transformation([P1;P2;P3],[P1_n;P2_n;P3_n]);
     handles.all_handles{i}.new_mesh_position = apply_transf_plot(handles.all_handles{i}.mesh_position,'Curved',handles.T_coefs(i,:),1);
-    if iii ~= 2
-        disp(handles.point_index_clusters)
+    if iii ~= 3
         index_row = find(ismember(handles.point_index_clusters,[i iii],'rows'));
         index_cluster = [];
         for j = 1:handles.num_of_clusters

@@ -49,13 +49,8 @@ end
 %% irregular mesh to grid weight interpolation
 
 V_equi = sphere2equi(V);
-size(V_equi)
 [SV,SVI,~] = remove_duplicate_vertices(V_equi,1e-7);
-size(SV)
-size(W)
-index = dsearchn(SV,V_equi);
 W = W(SVI,:);
-size(W)
 nx = 150;
 x = linspace(-pi+1e-6,pi-1e-6,nx);
 y = linspace(pi/2-1e-6,-pi/2+1e-6,nx/2);
