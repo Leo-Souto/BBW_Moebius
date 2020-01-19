@@ -182,12 +182,12 @@ clusterMaxSize = max(sizeOfClusters);
 clusterMeanSize = mean(sizeOfClusters);
 clusterMedianSize = median(sizeOfClusters);
 singlepointCount = numel(pointsNotInClusters);
-fprintf(1,'Number of clusters: %lu\n',clusterCount); % display the number of clusters
-fprintf(1,'Size of smallest cluster: %lu\n',clusterMinSize); % display the number of clusters
-fprintf(1,'Size of largest cluster: %lu\n',clusterMaxSize); % display the number of clusters
-fprintf(1,'Mean cluster size: %f\n',clusterMeanSize); % display the number of clusters
-fprintf(1,'Median cluster size: %lu\n',clusterMedianSize); % display the number of clusters
-fprintf(1,'Number of points that are not part of any cluster: %lu\n',singlepointCount); % display the number of single points
+% fprintf(1,'Number of clusters: %lu\n',clusterCount); % display the number of clusters
+% fprintf(1,'Size of smallest cluster: %lu\n',clusterMinSize); % display the number of clusters
+% fprintf(1,'Size of largest cluster: %lu\n',clusterMaxSize); % display the number of clusters
+% fprintf(1,'Mean cluster size: %f\n',clusterMeanSize); % display the number of clusters
+% fprintf(1,'Median cluster size: %lu\n',clusterMedianSize); % display the number of clusters
+% fprintf(1,'Number of points that are not part of any cluster: %lu\n',singlepointCount); % display the number of single points
 
 % Write the XY coordinates of every points of every cluster
 clustersXY = cell(clusterCount,1);

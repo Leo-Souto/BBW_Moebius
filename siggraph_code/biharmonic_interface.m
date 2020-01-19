@@ -213,7 +213,7 @@ if handles.cage_flag == 0
     handles.handles_plot{handles.num_of_handles} = h;
     equi_coord = pixel2equi(handles.point,handles.imagesize);
     equi_coord = [reshape(equi_coord,[1 2]); equi_coord(1)+0.3 equi_coord(2); equi_coord(1)-0.3 equi_coord(2)];
-    e_coord = sphere2equi(handles.V(knnsearch(handles.V,equi2sphere(equi_coord)),:));
+    e_coord = sphere2equi(handles.V(dsearchn(handles.V,equi2sphere(equi_coord)),:));
     if isequal(handles.button_value_handle,'closed_cage_handle')
         handles.all_handles{end+1} = bm_handle(handles.num_of_handles,equi_coord,e_coord,'Closed_Cage',1);
     end
@@ -270,7 +270,7 @@ else
     handles.num_of_handles = handles.num_of_handles + 1;
     equi_coord = pixel2equi(handles.point2,handles.imagesize);
     equi_coord = [reshape(equi_coord,[1 2]); equi_coord(1)+0.3 equi_coord(2); equi_coord(1)-0.3 equi_coord(2)];
-    e_coord = sphere2equi(handles.V(knnsearch(handles.V,equi2sphere(equi_coord)),:));
+    e_coord = sphere2equi(handles.V(dsearchn(handles.V,equi2sphere(equi_coord)),:));
     handles.plot_cage_tag_counter = handles.plot_cage_tag_counter + 1;
     if isequal(handles.button_value_handle,'closed_cage_handle')
         handles.all_handles{end+1} = bm_handle(handles.num_of_handles,equi_coord,e_coord,'Closed_Cage',handles.plot_cage_tag_counter);
@@ -532,430 +532,402 @@ end
 not_finally_cage_indices = cell(1, length(handles.all_cages));
 finally_cage_indices = [];
 handles.new_cages = cell(1, length(handles.all_cages));
-% if ~isempty(handles.all_cages)
-%     for i = 1:length(handles.all_cages)
-%         for j = handles.all_cages{i}
-%             not_finally_cage_indices{i} = [not_finally_cage_indices{i} cage_indices((find(cage_indices(:,1) == j)),2)];
-%             handles.new_cages{i} = [handles.new_cages{i} new_indice_order_cages(find(new_indice_order_cages(:,1) == j),2)];
-%         end
-%     end
-%     for i = 1:length(handles.all_cages)
-%         for j = 1:length(not_finally_cage_indices{i})-1
-%             finally_cage_indices = [finally_cage_indices; not_finally_cage_indices{i}(j) not_finally_cage_indices{i}(j+1)];
-%         end
-%     end
-% end
+if ~isempty(handles.all_cages)
+    for i = 1:length(handles.all_cages)
+        for j = handles.all_cages{i}
+            not_finally_cage_indices{i} = [not_finally_cage_indices{i} cage_indices((find(cage_indices(:,1) == j)),2)];
+            handles.new_cages{i} = [handles.new_cages{i} new_indice_order_cages(find(new_indice_order_cages(:,1) == j),2)];
+        end
+    end
+    for i = 1:length(handles.all_cages)
+        for j = 1:length(not_finally_cage_indices{i})-1
+            finally_cage_indices = [finally_cage_indices; not_finally_cage_indices{i}(j) not_finally_cage_indices{i}(j+1)];
+        end
+    end
+end
 
 handles.all_handles = handles.new_handle_order;
 
+%% Here we take care of nearby endpoints
+handles.coupled_endpoints = cell(handles.num_of_handles,1);
+handles.handles_visibility = ones(handles.num_of_handles,3);
+handles.bone_intersections = zeros(handles.num_of_handles,handles.num_of_handles);
+handles.intersection_points = [];
+handles.point_coord_clusters = [];
+handles.point_index_clusters = [];
 
+for i  = 1:handles.num_of_handles
+    if isequal(handles.new_handle_order{i}.type,'Curved')
+        P1 = handles.new_handle_order{i}.position(1,:);
+        P3 = handles.new_handle_order{i}.position(3,:);
+        handles.point_coord_clusters = [handles.point_coord_clusters; P1 ; P3];
+        handles.point_index_clusters = [handles.point_index_clusters; i 1; i 3];
+    end
+end
+raio_approx = 2*pi/100;
+[clustersCentroids,clustersGeoMedians,clustersXY, handles.clustersInd] = clusterXYpoints(handles.point_coord_clusters,raio_approx,1,'centroid','merge');
+% clustersCentroidsMeshPos = sphere2equi(handles.V(dsearchn(handles.V,equi2sphere(clustersCentroids)),:));
+handles.num_of_clusters = numel(handles.clustersInd);
+for i = 1:handles.num_of_clusters
+    for j = handles.clustersInd{i}
+        index = handles.point_index_clusters(j,:);
+        handles.new_handle_order{index(1)}.position(index(2),:) = clustersCentroids(i,:);
+        sphere_coord = equi2sphere(handles.new_handle_order{index(1)}.position(1,:));
+        sphere_coord2 = equi2sphere(handles.new_handle_order{index(1)}.position(3,:));
 
-% %% Here we take care of nearby endpoints
-% handles.coupled_endpoints = cell(handles.num_of_handles,1);
-% handles.handles_visibility = ones(handles.num_of_handles,3);
-% handles.bone_intersections = zeros(handles.num_of_handles,handles.num_of_handles);
-% handles.intersection_points = [];
-% handles.point_coord_clusters = [];
-% handles.point_index_clusters = [];
-% 
-% for i  = 1:handles.num_of_handles
-%     if isequal(handles.new_handle_order{i}.type,'Curved')
-%         P1 = handles.new_handle_order{i}.position(1,:);
-%         P3 = handles.new_handle_order{i}.position(3,:);
-%         handles.point_coord_clusters = [handles.point_coord_clusters; P1 ; P3];
-%         handles.point_index_clusters = [handles.point_index_clusters; i 1; i 3];
-%     end
-% end
-% raio_approx = 2*pi/100;
-% [clustersCentroids,clustersGeoMedians,clustersXY, handles.clustersInd] = clusterXYpoints(handles.point_coord_clusters,raio_approx,1,'centroid','merge');
-% clustersCentroidsMeshPos = sphere2equi(handles.V(knnsearch(handles.V,equi2sphere(clustersCentroids)),:));
-% handles.num_of_clusters = numel(handles.clustersInd);
-% for i = 1:handles.num_of_clusters
-%     for j = handles.clustersInd{i}
-%         index = handles.point_index_clusters(j,:);
-%         handles.new_handle_order{index(1)}.position(index(2),:) = clustersCentroids(i,:);
-%         handles.new_handle_order{index(1)}.new_position = handles.new_handle_order{index(1)}.position;
-%         handles.new_handle_order{index(1)}.mesh_position(index(2),:) = clustersCentroidsMeshPos(i,:);
-%     end
-% end
-% for i = 1:handles.num_of_clusters
-%     if length(handles.clustersInd{i}) > 1
-%         for j = handles.clustersInd{i}(2:end)
-%             index = handles.point_index_clusters(j,:);
-%             handles.handles_visibility(index(1),index(2)) = 0;
-%         end
-%     end
-% end
-% for i = 1:length(handles.new_handle_order)
-%     if isequal(handles.new_handle_order{i}.type,'Curved')
-%         if isequal(handles.new_handle_order{i}.mesh_position(1,:),handles.new_handle_order{i}.mesh_position(3,:))
-%             handles.new_handle_order{i} = {};
-%         end
-%     end
-% end
-% handles.new_handle_order = handles.new_handle_order(~cellfun('isempty',handles.new_handle_order));
-% handles.num_of_handles = length(handles.new_handle_order);
-% %% Here we take care of nearby endpoints
-% handles.coupled_endpoints = cell(handles.num_of_handles,1);
-% handles.handles_visibility = ones(handles.num_of_handles,3);
-% handles.bone_intersections = zeros(handles.num_of_handles,handles.num_of_handles);
-% handles.intersection_points = [];
-% handles.point_coord_clusters = [];
-% handles.point_index_clusters = [];
-% 
-% for i  = 1:handles.num_of_handles
-%     if isequal(handles.new_handle_order{i}.type,'Curved')
-%         P1 = handles.new_handle_order{i}.position(1,:);
-%         P3 = handles.new_handle_order{i}.position(3,:);
-%         handles.point_coord_clusters = [handles.point_coord_clusters; P1 ; P3];
-%         handles.point_index_clusters = [handles.point_index_clusters; i 1; i 3];
-%     end
-% end
-% raio_approx = 2*pi/100;
-% [clustersCentroids,clustersGeoMedians,clustersXY, handles.clustersInd] = clusterXYpoints(handles.point_coord_clusters,raio_approx,1,'centroid','merge');
-% clustersCentroidsMeshPos = sphere2equi(handles.V(knnsearch(handles.V,equi2sphere(clustersCentroids)),:));
-% handles.num_of_clusters = numel(handles.clustersInd);
-% for i = 1:handles.num_of_clusters
-%     for j = handles.clustersInd{i}
-%         index = handles.point_index_clusters(j,:);
-%         handles.new_handle_order{index(1)}.position(index(2),:) = clustersCentroids(i,:);
-%         handles.new_handle_order{index(1)}.new_position = handles.new_handle_order{index(1)}.position;
-%         handles.new_handle_order{index(1)}.mesh_position(index(2),:) = clustersCentroidsMeshPos(i,:);
-%     end
-% end
-% for i = 1:handles.num_of_clusters
-%     if length(handles.clustersInd{i}) > 1
-%         for j = handles.clustersInd{i}(2:end)
-%             index = handles.point_index_clusters(j,:);
-%             handles.handles_visibility(index(1),index(2)) = 0;
-%         end
-%     end
-% end
-% num_of_intersections = cell(handles.num_of_handles,1);
-% %%[x_int y_int ind_linspace]
-% 
-% %%in this desnecessary big code we break the bones
-% for i =1:handles.num_of_handles
-%     if strcmp(handles.new_handle_order{i}.type,'Curved')
-%         for j = 1:handles.num_of_handles
-%             if strcmp(handles.new_handle_order{j}.type,'Curved') && i ~= j
-%                 
-%                 segmento_i_pos = [handles.new_handle_order{i}.position(1,:); ...
-%                     handles.new_handle_order{i}.position(3,:)];
-%                 segmento_j_pos = [handles.new_handle_order{j}.position(1,:); ...
-%                     handles.new_handle_order{j}.position(3,:)];
-%                 
-%                 sphere_i_pos = equi2sphere(segmento_i_pos);
-%                 sphere_j_pos = equi2sphere(segmento_j_pos);
-%                 segmento_i_x = linspace(sphere_i_pos(1,1),sphere_i_pos(2,1),100);
-%                 segmento_i_y = linspace(sphere_i_pos(1,2),sphere_i_pos(2,2),100);
-%                 segmento_i_z = linspace(sphere_i_pos(1,3),sphere_i_pos(2,3),100);
-%                 segmento_j_x = linspace(sphere_j_pos(1,1),sphere_j_pos(2,1),100);
-%                 segmento_j_y = linspace(sphere_j_pos(1,2),sphere_j_pos(2,2),100);
-%                 segmento_j_z = linspace(sphere_j_pos(1,3),sphere_j_pos(2,3),100);
-%                 segmento_i = [segmento_i_x' segmento_i_y' segmento_i_z'];
-%                 segmento_j = [segmento_j_x' segmento_j_y' segmento_j_z'];
-%                 segmento_i_norm = sqrt(sum(segmento_i.^2,2));
-%                 segmento_i_norm = [segmento_i_norm segmento_i_norm segmento_i_norm];%%faço isso pra poder usar div-by-element
-%                 segmento_j_norm = sqrt(sum(segmento_j.^2,2));
-%                 segmento_j_norm = [segmento_j_norm segmento_j_norm segmento_j_norm];
-%                 segmento_i = segmento_i./segmento_i_norm;
-%                 segmento_j = segmento_j./segmento_j_norm;
-%                 segmento_i = sphere2equi(segmento_i);%aqui tenho o segmento reconstruido no espaço equirretangular
-%                 segmento_j = sphere2equi(segmento_j);
-%                 deriv_i = diff(segmento_i(:,1));
-%                 index_i = find(abs(deriv_i) > 0.1);
-%                 index_i = sort(index_i);
-%                 deriv_j = diff(segmento_j(:,1));
-%                 index_j = find(abs(deriv_j) > 0.1);
-%                 index_j = sort(index_j);
-%                 
-%                 if ~isempty(index_i)
-%                     if ~isempty(index_j)
-%                         %%i and j intersect the boundary
-%                         seg_i_1 = segmento_i(1:index_i(1),:);
-%                         seg_i_2 = segmento_i(index_i(end)+1:100,:);
-%                         seg_j_1 = segmento_j(1:index_j(1),:);
-%                         seg_j_2 = segmento_j(index_j(end)+1:100,:);
-%                         [x1,y1] = intersections(seg_i_1(:,1),seg_i_1(:,2),seg_j_1(:,1),seg_j_1(:,2),'Robust');
-%                         [x2,y2] = intersections(seg_i_2(:,1),seg_i_2(:,2),seg_j_1(:,1),seg_j_1(:,2),'Robust');
-%                         [x3,y3] = intersections(seg_i_1(:,1),seg_i_1(:,2),seg_j_2(:,1),seg_j_2(:,2),'Robust');
-%                         [x4,y4] = intersections(seg_i_2(:,1),seg_i_2(:,2),seg_j_2(:,1),seg_j_2(:,2),'Robust');
-%                         x_intersect = [x1 x2 x3 x4];
-%                         y_intersect = [y1 y2 y3 y4];
-%                     else
-%                         %%only i intersect the boundary
-%                         seg_i_1 = segmento_i(1:index_i(1),:);
-%                         seg_i_2 = segmento_i(index_i(end)+1:100,:);
-%                         [x1,y1] = intersections(seg_i_1(:,1),seg_i_1(:,2),segmento_j(:,1),segmento_j(:,2),'Robust');
-%                         [x2,y2] = intersections(seg_i_2(:,1),seg_i_2(:,2),segmento_j(:,1),segmento_j(:,2),'Robust');
-%                         x_intersect = [x1 x2];
-%                         y_intersect = [y1 y2];
-%                     end
-%                 else
-%                     if ~isempty(index_j)
-%                         %%only j intersect the boundary
-%                         seg_j_1 = segmento_j(1:index_j(1),:);
-%                         seg_j_2 = segmento_j(index_j(end)+1:100,:);
-%                         [x1,y1] = intersections(segmento_i(:,1),segmento_i(:,2),seg_j_1(:,1),seg_j_1(:,2),'Robust');
-%                         [x2,y2] = intersections(segmento_i(:,1),segmento_i(:,2),seg_j_2(:,1),seg_j_2(:,2),'Robust');
-%                         x_intersect = [x1 x2];
-%                         y_intersect = [y1 y2];
-%                     else
-%                         %%none intersect the boundary
-%                         [x_intersect,y_intersect] = intersections(segmento_i(:,1),segmento_i(:,2),segmento_j(:,1),segmento_j(:,2),'Robust');
-%                     end
-%                 end
-%                 %test if is not a simple intersection of
-%                 %endpoints
-%                 pos_i_1 = handles.new_handle_order{i}.position(1,:);
-%                 pos_i_3 = handles.new_handle_order{i}.position(3,:);
-%                 pos_j_1 = handles.new_handle_order{j}.position(1,:);
-%                 pos_j_3 = handles.new_handle_order{j}.position(3,:);
-%                 cond11 = 0;
-%                 cond13 = 0;
-%                 cond31 = 0;
-%                 cond33 = 0;
-%                 if ~isempty(x_intersect) && isequal(size(x_intersect),[1 1])
-%                     cond11 = sqrt((pos_i_1(1) - x_intersect)^2 + (pos_i_1(2) - y_intersect)^2) < 1e-5 && ...
-%                         sqrt((pos_j_1(1) - x_intersect)^2 + (pos_j_1(2) - y_intersect)^2) < 1e-5;
-%                     cond31 = sqrt((pos_i_3(1) - x_intersect)^2 + (pos_i_3(2) - y_intersect)^2) < 1e-5 && ...
-%                         sqrt((pos_j_1(1) - x_intersect)^2 + (pos_j_1(2) - y_intersect)^2) < 1e-5;
-%                     cond13 = sqrt((pos_i_1(1) - x_intersect)^2 + (pos_i_1(2) - y_intersect)^2) < 1e-5 && ...
-%                         sqrt((pos_j_3(1) - x_intersect)^2 + (pos_j_3(2) - y_intersect)^2) < 1e-5;
-%                     cond33 = sqrt((pos_i_3(1) - x_intersect)^2 + (pos_i_3(2) - y_intersect)^2) < 1e-5 && ...
-%                         sqrt((pos_j_3(1) - x_intersect)^2 + (pos_j_3(2) - y_intersect)^2) < 1e-5;
-%                 end
-%                 cond = cond11 || cond31 || cond13 || cond33;
-%                 if ~isempty(x_intersect) && ~cond
-%                     ind_lin = knnsearch(segmento_i,[x_intersect y_intersect]);
-%                     num_of_intersections{i} = [num_of_intersections{i};...
-%                         x_intersect y_intersect ind_lin];
-%                 end
-%             end
-%         end
-%     end
-% end
-% 
-% new_bones = 0;
-% for i = 1:handles.num_of_handles
-%     if size(num_of_intersections{i},1) > 1
-%         num_of_intersections{i} = sortrows(num_of_intersections{i},3);
-%     end
-% end
-% 
-% for i = 1:handles.num_of_handles
-%     if ~isempty(num_of_intersections{i})
-%         final_bone_pos = handles.new_handle_order{i}.position(3,:);
-%         init_pos = handles.new_handle_order{i}.position(1,:);
-%         final_pos = num_of_intersections{i}(1,1:2);
-%         segmento = [init_pos;final_pos];
-%         segmento_sph = equi2sphere(segmento);
-%         seg_x = linspace(segmento_sph(1,1),segmento_sph(2,1),100);
-%         seg_y = linspace(segmento_sph(1,2),segmento_sph(2,2),100);
-%         seg_z = linspace(segmento_sph(1,3),segmento_sph(2,3),100);
-%         seg = [seg_x' seg_y' seg_z'];
-%         seg_norm = sqrt(sum(seg.^2,2));
-%         seg_norm = [seg_norm seg_norm seg_norm];
-%         seg = seg./seg_norm;
-%         segmento = sphere2equi(seg);
-%         
-%         deriv = diff(segmento(:,1));
-%         index = find(abs(deriv) > 0.1);
-%         index = sort(index);
-%         if isempty(index)
-%             for k = 1:100
-%                 prop = bm_length_of_curve(segmento,k)/bm_length_of_curve(segmento,100);
-%                 if prop >= 0.5
-%                     ind = k;
-%                     break
-%                 end
-%             end
-%             midpoint = segmento(ind,:);
-%             equi_coord = [init_pos;midpoint;final_pos];
-%             mesh_coord = sphere2equi(handles.V(knnsearch(handles.V,equi2sphere(equi_coord)),:));
-%             handles.new_handle_order{i} = bm_handle(handles.num_of_handles+new_bones,equi_coord,mesh_coord,'Curved',0);
-%             handles.new_handle_order{i}.proportion = bm_length_of_curve(segmento,ind)/bm_length_of_curve(segmento,100);
-%         else
-%             inicio = index(1);
-%             fim = index(length(index))+1;
-%             ind = 0;
-%             A = length(segmento(1:inicio,:));
-%             B = length(segmento(fim:end,:));
-%             for k = 1:inicio
-%                 prop = bm_length_of_curve(segmento,k)/...
-%                     (bm_length_of_curve(segmento,A)+ bm_length_of_curve(segmento(fim:end,:),B));
-%                 if prop >= 0.5
-%                     ind = k;
-%                     break
-%                 end
-%             end
-%             if ind == 0
-%                 ind = floor(4*inicio/5);
-%             end
-%             midpoint = segmento(ind,:);
-%             equi_coord = [init_pos;midpoint;final_pos];
-%             mesh_coord = sphere2equi(handles.V(knnsearch(handles.V,equi2sphere(equi_coord)),:));
-%             handles.new_handle_order{i} = bm_handle(handles.num_of_handles+new_bones,equi_coord,mesh_coord,'Curved',0);
-%             handles.new_handle_order{i}.proportion = bm_length_of_curve(segmento,ind)/...
-%                 (bm_length_of_curve(segmento,A)+ bm_length_of_curve(segmento(fim:end,:),B));
-%         end
-%         if size(num_of_intersections{i},1) > 1
-%             for j = 2:size(num_of_intersections{i},1)
-%                 init_pos = final_pos;
-%                 final_pos = num_of_intersections{i}(j,1:2);
-%                 segmento = [init_pos;final_pos];
-%                 segmento_sph = equi2sphere(segmento);
-%                 seg_x = linspace(segmento_sph(1,1),segmento_sph(2,1),100);
-%                 seg_y = linspace(segmento_sph(1,2),segmento_sph(2,2),100);
-%                 seg_z = linspace(segmento_sph(1,3),segmento_sph(2,3),100);
-%                 seg = [seg_x' seg_y' seg_z'];
-%                 seg_norm = sqrt(sum(seg.^2,2));
-%                 seg_norm = [seg_norm seg_norm seg_norm];
-%                 seg = seg./seg_norm;
-%                 segmento = sphere2equi(seg);
-%                 new_bones = new_bones+1;
-%                 deriv = diff(segmento(:,1));
-%                 index = find(abs(deriv) > 0.1);
-%                 index = sort(index);
-%                 if isempty(index)
-%                     for k = 1:100
-%                         prop = bm_length_of_curve(segmento,k)/bm_length_of_curve(segmento,100);
-%                         if prop >= 0.5
-%                             ind = k;
-%                             break
-%                         end
-%                     end
-%                     midpoint = segmento(ind,:);
-%                     equi_coord = [init_pos;midpoint;final_pos];
-%                     mesh_coord = sphere2equi(handles.V(knnsearch(handles.V,equi2sphere(equi_coord)),:));
-%                     handles.new_handle_order{end+1} = bm_handle(handles.num_of_handles+new_bones,equi_coord,mesh_coord,'Curved',0);
-%                     handles.new_handle_order{end}.proportion = bm_length_of_curve(segmento,ind)/bm_length_of_curve(segmento,100);
-%                 else
-%                     inicio = index(1);
-%                     fim = index(length(index))+1;
-%                     ind = 0;
-%                     A = length(segmento(1:inicio,:));
-%                     B = length(segmento(fim:end,:));
-%                     for k = 1:inicio
-%                         prop = bm_length_of_curve(segmento,k)/...
-%                             (bm_length_of_curve(segmento,A)+ bm_length_of_curve(segmento(fim:end,:),B));
-%                         if prop >= 0.5
-%                             ind = k;
-%                             break
-%                         end
-%                     end
-%                     if ind == 0
-%                         ind = floor(4*inicio/5);
-%                     end
-%                     midpoint = segmento(ind,:);
-%                     equi_coord = [init_pos;midpoint;final_pos];
-%                     handles.new_handle_order{end+1} = bm_handle(handles.num_of_handles+new_bones,equi_coord,mesh_coord,'Curved',0);
-%                     handles.new_handle_order{end}.proportion = bm_length_of_curve(segmento,ind)/...
-%                         (bm_length_of_curve(segmento,A)+ bm_length_of_curve(segmento(fim:end,:),B));
-%                 end
-%             end
-%         end
-%         init_pos = final_pos;
-%         final_pos = final_bone_pos;
-%         segmento = [init_pos;final_pos];
-%         segmento_sph = equi2sphere(segmento);
-%         seg_x = linspace(segmento_sph(1,1),segmento_sph(2,1),100);
-%         seg_y = linspace(segmento_sph(1,2),segmento_sph(2,2),100);
-%         seg_z = linspace(segmento_sph(1,3),segmento_sph(2,3),100);
-%         seg = [seg_x' seg_y' seg_z'];
-%         seg_norm = sqrt(sum(seg.^2,2));
-%         seg_norm = [seg_norm seg_norm seg_norm];
-%         seg = seg./seg_norm;
-%         segmento = sphere2equi(seg);
-%         new_bones = new_bones+1;
-%         deriv = diff(segmento(:,1));
-%         index = find(abs(deriv) > 0.1);
-%         index = sort(index);
-%         if isempty(index)
-%             for k = 1:100
-%                 prop = bm_length_of_curve(segmento,k)/bm_length_of_curve(segmento,100);
-%                 if prop >= 0.5
-%                     ind = k;
-%                     break
-%                 end
-%             end
-%             midpoint = segmento(ind,:);
-%             equi_coord = [init_pos;midpoint;final_pos];
-%             mesh_coord = sphere2equi(handles.V(knnsearch(handles.V,equi2sphere(equi_coord)),:));
-%             handles.new_handle_order{end+1} = bm_handle(handles.num_of_handles+new_bones,equi_coord,mesh_coord,'Curved',0);
-%             handles.new_handle_order{end}.proportion = bm_length_of_curve(segmento,ind)/bm_length_of_curve(segmento,100);
-%         else
-%             inicio = index(1);
-%             fim = index(length(index))+1;
-%             ind = 0;
-%             A = length(segmento(1:inicio,:));
-%             B = length(segmento(fim:end,:));
-%             for k = 1:inicio
-%                 prop = bm_length_of_curve(segmento,k)/...
-%                     (bm_length_of_curve(segmento,A)+ bm_length_of_curve(segmento(fim:end,:),B));
-%                 if prop >= 0.5
-%                     ind = k;
-%                     break
-%                 end
-%             end
-%             if ind == 0
-%                 ind = floor(4*inicio/5);
-%             end
-%             midpoint = segmento(ind,:);
-%             equi_coord = [init_pos;midpoint;final_pos];
-%             handles.new_handle_order{end+1} = bm_handle(handles.num_of_handles+new_bones,equi_coord,mesh_coord,'Curved',0);
-%             handles.new_handle_order{end}.proportion = bm_length_of_curve(segmento,ind)/...
-%                 (bm_length_of_curve(segmento,A)+ bm_length_of_curve(segmento(fim:end,:),B));
-%         end
-%         
-%     end
-% end
-% 
-% %% Here we take care of nearby endpoints
-% handles.num_of_handles = length(handles.new_handle_order);
-% handles.coupled_endpoints = cell(handles.num_of_handles,1);
-% handles.handles_visibility = ones(handles.num_of_handles,3);
-% handles.bone_intersections = zeros(handles.num_of_handles,handles.num_of_handles);
-% handles.intersection_points = [];
-% handles.point_coord_clusters = [];
-% handles.point_index_clusters = [];
-% 
-% for i  = 1:handles.num_of_handles
-%     if isequal(handles.new_handle_order{i}.type,'Curved')
-%         P1 = handles.new_handle_order{i}.position(1,:);
-%         P3 = handles.new_handle_order{i}.position(3,:);
-%         handles.point_coord_clusters = [handles.point_coord_clusters; P1 ; P3];
-%         handles.point_index_clusters = [handles.point_index_clusters; i 1; i 3];
-%     end
-% end
-% raio_approx = 2*pi/100;
-% [clustersCentroids,clustersGeoMedians,clustersXY, handles.clustersInd] = clusterXYpoints(handles.point_coord_clusters,raio_approx,1,'centroid','merge');
-% 
-% handles.num_of_clusters = numel(handles.clustersInd);
-% for i = 1:handles.num_of_clusters
-%     for j = handles.clustersInd{i}
-%         index = handles.point_index_clusters(j,:);
-%         handles.new_handle_order{index(1)}.position(index(2),:) = clustersCentroids(i,:);
-%         handles.new_handle_order{index(1)}.new_position = handles.new_handle_order{index(1)}.position;
-%         handles.new_handle_order{index(1)}.mesh_position = sphere2equi(handles.V(knnsearch(handles.V,equi2sphere(handles.new_handle_order{index(1)}.position)),:));
-%     end
-% end
-% for i = 1:handles.num_of_clusters
-%     if length(handles.clustersInd{i}) > 1
-%         for j = handles.clustersInd{i}(2:end)
-%             index = handles.point_index_clusters(j,:);
-%             handles.handles_visibility(index(1),index(2)) = 0;
-%         end
-%     end
-% end
-% for i = 1:length(handles.new_handle_order)
-%     if isequal(handles.new_handle_order{i}.type,'Curved')
-%         if isequal(handles.new_handle_order{i}.mesh_position(1,:),handles.new_handle_order{i}.mesh_position(3,:))
-%             handles.new_handle_order{i} = {};
-%         end
-%     end
-% end
+        mid_point = [(0.5*sphere_coord(1) + 0.5*sphere_coord2(1)) ...
+        (0.5*sphere_coord(2) + 0.5*sphere_coord2(2)) ...
+        (0.5*sphere_coord(3) + 0.5*sphere_coord2(3))];
+        mid_point = mid_point/sqrt(mid_point(1)^2 + mid_point(2)^2 +mid_point(3)^2);
+        mid_point = sphere2equi(mid_point);
+
+        handles.new_handle_order{index(1)}.position(2,:) = mid_point;
+        handles.new_handle_order{index(1)}.new_position = handles.new_handle_order{index(1)}.position;
+        
+        t = linspace(0,1,100);
+        parametric = [];
+        parametric(:,1) = (1-t)*sphere_coord(1) + t*sphere_coord2(1);
+        parametric(:,2) = (1-t)*sphere_coord(2) + t*sphere_coord2(2);
+        parametric(:,3) = (1-t)*sphere_coord(3) + t*sphere_coord2(3);
+        norma = sqrt(parametric(:,1).^2 + parametric(:,2).^2 + parametric(:,3).^2);
+        parametric(:,1) = parametric(:,1)./norma;
+        parametric(:,2) = parametric(:,2)./norma;
+        parametric(:,3) = parametric(:,3)./norma;
+        equi_coord_par = sphere2equi(parametric);
+        handles.new_handle_order{index(1)}.mesh_position = equi_coord_par;
+        handles.new_handle_order{index(1)}.new_mesh_position = equi_coord_par;
+    end
+end
+for i = 1:handles.num_of_clusters
+    if length(handles.clustersInd{i}) > 1
+        for j = handles.clustersInd{i}(2:end)
+            index = handles.point_index_clusters(j,:);
+            handles.handles_visibility(index(1),index(2)) = 0;
+        end
+    end
+end
+for i = 1:length(handles.new_handle_order)
+    if isequal(handles.new_handle_order{i}.type,'Curved')
+        if isequal(handles.new_handle_order{i}.position(1,:),handles.new_handle_order{i}.position(3,:))
+            handles.new_handle_order{i} = {};
+        end
+    end
+end
+handles.new_handle_order = handles.new_handle_order(~cellfun('isempty',handles.new_handle_order));
+handles.num_of_handles = length(handles.new_handle_order);
+handles.all_handles = handles.new_handle_order;
+disp(handles.point_index_clusters)
+
+%% Here we take care of nearby endpoints
+handles.coupled_endpoints = cell(handles.num_of_handles,1);
+handles.handles_visibility = ones(handles.num_of_handles,3);
+handles.bone_intersections = zeros(handles.num_of_handles,handles.num_of_handles);
+handles.intersection_points = [];
+handles.point_coord_clusters = [];
+handles.point_index_clusters = [];
+
+for i  = 1:handles.num_of_handles
+    if isequal(handles.new_handle_order{i}.type,'Curved')
+        P1 = handles.new_handle_order{i}.position(1,:);
+        P3 = handles.new_handle_order{i}.position(3,:);
+        handles.point_coord_clusters = [handles.point_coord_clusters; P1 ; P3];
+        handles.point_index_clusters = [handles.point_index_clusters; i 1; i 3];
+    end
+end
+raio_approx = 2*pi/100;
+[clustersCentroids,clustersGeoMedians,clustersXY, handles.clustersInd] = clusterXYpoints(handles.point_coord_clusters,raio_approx,1,'centroid','merge');
+handles.num_of_clusters = numel(handles.clustersInd);
+for i = 1:handles.num_of_clusters
+    for j = handles.clustersInd{i}
+        index = handles.point_index_clusters(j,:);
+        handles.new_handle_order{index(1)}.position(index(2),:) = clustersCentroids(i,:);
+        sphere_coord = equi2sphere(handles.new_handle_order{index(1)}.position(1,:));
+        sphere_coord2 = equi2sphere(handles.new_handle_order{index(1)}.position(3,:));
+
+        mid_point = [(0.5*sphere_coord(1) + 0.5*sphere_coord2(1)) ...
+        (0.5*sphere_coord(2) + 0.5*sphere_coord2(2)) ...
+        (0.5*sphere_coord(3) + 0.5*sphere_coord2(3))];
+        mid_point = mid_point/sqrt(mid_point(1)^2 + mid_point(2)^2 +mid_point(3)^2);
+        mid_point = sphere2equi(mid_point);
+
+        handles.new_handle_order{index(1)}.position(2,:) = mid_point;
+        handles.new_handle_order{index(1)}.new_position = handles.new_handle_order{index(1)}.position;
+        
+        t = linspace(0,1,100);
+        parametric = [];
+        parametric(:,1) = (1-t)*sphere_coord(1) + t*sphere_coord2(1);
+        parametric(:,2) = (1-t)*sphere_coord(2) + t*sphere_coord2(2);
+        parametric(:,3) = (1-t)*sphere_coord(3) + t*sphere_coord2(3);
+        norma = sqrt(parametric(:,1).^2 + parametric(:,2).^2 + parametric(:,3).^2);
+        parametric(:,1) = parametric(:,1)./norma;
+        parametric(:,2) = parametric(:,2)./norma;
+        parametric(:,3) = parametric(:,3)./norma;
+        equi_coord_par = sphere2equi(parametric);
+        handles.new_handle_order{index(1)}.mesh_position = equi_coord_par;
+        handles.new_handle_order{index(1)}.new_mesh_position = equi_coord_par;
+    end
+end
+for i = 1:handles.num_of_clusters
+    if length(handles.clustersInd{i}) > 1
+        for j = handles.clustersInd{i}(2:end)
+            index = handles.point_index_clusters(j,:);
+            handles.handles_visibility(index(1),index(2)) = 0;
+        end
+    end
+end
+num_of_intersections = cell(handles.num_of_handles,1);
+%%[x_int y_int ind_linspace]
+
+%%in this desnecessary big code we break the bones
+for i =1:handles.num_of_handles
+    if strcmp(handles.new_handle_order{i}.type,'Curved')
+        for j = 1:handles.num_of_handles
+            if strcmp(handles.new_handle_order{j}.type,'Curved') && i ~= j
+                
+                segmento_i_pos = [handles.new_handle_order{i}.position(1,:); ...
+                    handles.new_handle_order{i}.position(3,:)];
+                segmento_j_pos = [handles.new_handle_order{j}.position(1,:); ...
+                    handles.new_handle_order{j}.position(3,:)];
+                
+                sphere_i_pos = equi2sphere(segmento_i_pos);
+                sphere_j_pos = equi2sphere(segmento_j_pos);
+                segmento_i_x = linspace(sphere_i_pos(1,1),sphere_i_pos(2,1),100);
+                segmento_i_y = linspace(sphere_i_pos(1,2),sphere_i_pos(2,2),100);
+                segmento_i_z = linspace(sphere_i_pos(1,3),sphere_i_pos(2,3),100);
+                segmento_j_x = linspace(sphere_j_pos(1,1),sphere_j_pos(2,1),100);
+                segmento_j_y = linspace(sphere_j_pos(1,2),sphere_j_pos(2,2),100);
+                segmento_j_z = linspace(sphere_j_pos(1,3),sphere_j_pos(2,3),100);
+                segmento_i = [segmento_i_x' segmento_i_y' segmento_i_z'];
+                segmento_j = [segmento_j_x' segmento_j_y' segmento_j_z'];
+                segmento_i_norm = sqrt(sum(segmento_i.^2,2));
+                segmento_i_norm = [segmento_i_norm segmento_i_norm segmento_i_norm];%%faço isso pra poder usar div-by-element
+                segmento_j_norm = sqrt(sum(segmento_j.^2,2));
+                segmento_j_norm = [segmento_j_norm segmento_j_norm segmento_j_norm];
+                segmento_i = segmento_i./segmento_i_norm;
+                segmento_j = segmento_j./segmento_j_norm;
+                segmento_i = sphere2equi(segmento_i);%aqui tenho o segmento reconstruido no espaço equirretangular
+                segmento_j = sphere2equi(segmento_j);
+                deriv_i = diff(segmento_i(:,1));
+                index_i = find(abs(deriv_i) > 0.1);
+                index_i = sort(index_i);
+                deriv_j = diff(segmento_j(:,1));
+                index_j = find(abs(deriv_j) > 0.1);
+                index_j = sort(index_j);
+                
+                if ~isempty(index_i)
+                    if ~isempty(index_j)
+                        %%i and j intersect the boundary
+                        seg_i_1 = segmento_i(1:index_i(1),:);
+                        seg_i_2 = segmento_i(index_i(end)+1:100,:);
+                        seg_j_1 = segmento_j(1:index_j(1),:);
+                        seg_j_2 = segmento_j(index_j(end)+1:100,:);
+                        [x1,y1] = intersections(seg_i_1(:,1),seg_i_1(:,2),seg_j_1(:,1),seg_j_1(:,2),'Robust');
+                        [x2,y2] = intersections(seg_i_2(:,1),seg_i_2(:,2),seg_j_1(:,1),seg_j_1(:,2),'Robust');
+                        [x3,y3] = intersections(seg_i_1(:,1),seg_i_1(:,2),seg_j_2(:,1),seg_j_2(:,2),'Robust');
+                        [x4,y4] = intersections(seg_i_2(:,1),seg_i_2(:,2),seg_j_2(:,1),seg_j_2(:,2),'Robust');
+                        x_intersect = [x1 x2 x3 x4];
+                        y_intersect = [y1 y2 y3 y4];
+                    else
+                        %%only i intersect the boundary
+                        seg_i_1 = segmento_i(1:index_i(1),:);
+                        seg_i_2 = segmento_i(index_i(end)+1:100,:);
+                        [x1,y1] = intersections(seg_i_1(:,1),seg_i_1(:,2),segmento_j(:,1),segmento_j(:,2),'Robust');
+                        [x2,y2] = intersections(seg_i_2(:,1),seg_i_2(:,2),segmento_j(:,1),segmento_j(:,2),'Robust');
+                        x_intersect = [x1 x2];
+                        y_intersect = [y1 y2];
+                    end
+                else
+                    if ~isempty(index_j)
+                        %%only j intersect the boundary
+                        seg_j_1 = segmento_j(1:index_j(1),:);
+                        seg_j_2 = segmento_j(index_j(end)+1:100,:);
+                        [x1,y1] = intersections(segmento_i(:,1),segmento_i(:,2),seg_j_1(:,1),seg_j_1(:,2),'Robust');
+                        [x2,y2] = intersections(segmento_i(:,1),segmento_i(:,2),seg_j_2(:,1),seg_j_2(:,2),'Robust');
+                        x_intersect = [x1 x2];
+                        y_intersect = [y1 y2];
+                    else
+                        %%none intersect the boundary
+                        [x_intersect,y_intersect] = intersections(segmento_i(:,1),segmento_i(:,2),segmento_j(:,1),segmento_j(:,2),'Robust');
+                    end
+                end
+                %test if is not a simple intersection of
+                %endpoints
+                pos_i_1 = handles.new_handle_order{i}.position(1,:);
+                pos_i_3 = handles.new_handle_order{i}.position(3,:);
+                pos_j_1 = handles.new_handle_order{j}.position(1,:);
+                pos_j_3 = handles.new_handle_order{j}.position(3,:);
+                cond11 = 0;
+                cond13 = 0;
+                cond31 = 0;
+                cond33 = 0;
+                if ~isempty(x_intersect) && isequal(size(x_intersect),[1 1])
+                    cond11 = sqrt((pos_i_1(1) - x_intersect)^2 + (pos_i_1(2) - y_intersect)^2) < 1e-5 && ...
+                        sqrt((pos_j_1(1) - x_intersect)^2 + (pos_j_1(2) - y_intersect)^2) < 1e-5;
+                    cond31 = sqrt((pos_i_3(1) - x_intersect)^2 + (pos_i_3(2) - y_intersect)^2) < 1e-5 && ...
+                        sqrt((pos_j_1(1) - x_intersect)^2 + (pos_j_1(2) - y_intersect)^2) < 1e-5;
+                    cond13 = sqrt((pos_i_1(1) - x_intersect)^2 + (pos_i_1(2) - y_intersect)^2) < 1e-5 && ...
+                        sqrt((pos_j_3(1) - x_intersect)^2 + (pos_j_3(2) - y_intersect)^2) < 1e-5;
+                    cond33 = sqrt((pos_i_3(1) - x_intersect)^2 + (pos_i_3(2) - y_intersect)^2) < 1e-5 && ...
+                        sqrt((pos_j_3(1) - x_intersect)^2 + (pos_j_3(2) - y_intersect)^2) < 1e-5;
+                end
+                cond = cond11 || cond31 || cond13 || cond33;
+                if ~isempty(x_intersect) && ~cond
+                    ind_lin = dsearchn(segmento_i,[x_intersect y_intersect]);
+                    num_of_intersections{i} = [num_of_intersections{i};...
+                        x_intersect y_intersect ind_lin];
+                end
+            end
+        end
+    end
+end
+disp(handles.new_handle_order)
+
+new_bones = 0;
+for i = 1:handles.num_of_handles
+    if size(num_of_intersections{i},1) > 1
+        num_of_intersections{i} = sortrows(num_of_intersections{i},3);
+    end
+end
+
+for i = 1:handles.num_of_handles
+    if ~isempty(num_of_intersections{i})
+        final_bone_pos = handles.new_handle_order{i}.position(3,:);
+        init_pos = handles.new_handle_order{i}.position(1,:);
+        final_pos = num_of_intersections{i}(1,1:2);
+        segmento = [init_pos;final_pos];
+        segmento_sph = equi2sphere(segmento);
+        seg_x = linspace(segmento_sph(1,1),segmento_sph(2,1),100);
+        seg_y = linspace(segmento_sph(1,2),segmento_sph(2,2),100);
+        seg_z = linspace(segmento_sph(1,3),segmento_sph(2,3),100);
+        seg = [seg_x' seg_y' seg_z'];
+        seg_norm = sqrt(sum(seg.^2,2));
+        seg_norm = [seg_norm seg_norm seg_norm];
+        seg = seg./seg_norm;
+        segmento = sphere2equi(seg);
+        mid_point = [(0.5*segmento_sph(1,1) + 0.5*segmento_sph(2,1)) ...
+        (0.5*segmento_sph(1,2) + 0.5*segmento_sph(2,2)) ...
+        (0.5*segmento_sph(1,3) + 0.5*segmento_sph(2,3))];
+        mid_point = mid_point/sqrt(mid_point(1)^2 + mid_point(2)^2 +mid_point(3)^2);
+        mid_point = sphere2equi(mid_point);
+        equi_coord = [init_pos;mid_point;final_pos];
+        handles.new_handle_order{i} = bm_handle(handles.num_of_handles+new_bones,equi_coord,segmento,'Curved',0);
+        handles.new_handle_order{i}.proportion = 0.5;
+        if size(num_of_intersections{i},1) > 1
+            for j = 2:size(num_of_intersections{i},1)
+                init_pos = final_pos;
+                final_pos = num_of_intersections{i}(j,1:2);
+                segmento = [init_pos;final_pos];
+                segmento_sph = equi2sphere(segmento);
+                seg_x = linspace(segmento_sph(1,1),segmento_sph(2,1),100);
+                seg_y = linspace(segmento_sph(1,2),segmento_sph(2,2),100);
+                seg_z = linspace(segmento_sph(1,3),segmento_sph(2,3),100);
+                seg = [seg_x' seg_y' seg_z'];
+                seg_norm = sqrt(sum(seg.^2,2));
+                seg_norm = [seg_norm seg_norm seg_norm];
+                seg = seg./seg_norm;
+                segmento = sphere2equi(seg);
+                mid_point = [(0.5*segmento_sph(1,1) + 0.5*segmento_sph(2,1)) ...
+                (0.5*segmento_sph(1,2) + 0.5*segmento_sph(2,2)) ...
+                (0.5*segmento_sph(1,3) + 0.5*segmento_sph(2,3))];
+                mid_point = mid_point/sqrt(mid_point(1)^2 + mid_point(2)^2 +mid_point(3)^2);
+                mid_point = sphere2equi(mid_point);
+                equi_coord = [init_pos;mid_point;final_pos];
+                new_bones = new_bones+1;
+                handles.new_handle_order{end+1} = bm_handle(handles.num_of_handles+new_bones,equi_coord,segmento,'Curved',0);
+                handles.new_handle_order{end}.proportion = 0.5;
+            end
+        end
+        init_pos = final_pos;
+        final_pos = final_bone_pos;
+        segmento = [init_pos;final_pos];
+        segmento_sph = equi2sphere(segmento);
+        seg_x = linspace(segmento_sph(1,1),segmento_sph(2,1),100);
+        seg_y = linspace(segmento_sph(1,2),segmento_sph(2,2),100);
+        seg_z = linspace(segmento_sph(1,3),segmento_sph(2,3),100);
+        seg = [seg_x' seg_y' seg_z'];
+        seg_norm = sqrt(sum(seg.^2,2));
+        seg_norm = [seg_norm seg_norm seg_norm];
+        seg = seg./seg_norm;
+        segmento = sphere2equi(seg);
+        mid_point = [(0.5*segmento_sph(1,1) + 0.5*segmento_sph(2,1)) ...
+        (0.5*segmento_sph(1,2) + 0.5*segmento_sph(2,2)) ...
+        (0.5*segmento_sph(1,3) + 0.5*segmento_sph(2,3))];
+        mid_point = mid_point/sqrt(mid_point(1)^2 + mid_point(2)^2 +mid_point(3)^2);
+        mid_point = sphere2equi(mid_point);
+        equi_coord = [init_pos;mid_point;final_pos];
+        new_bones = new_bones+1;
+        handles.new_handle_order{end+1} = bm_handle(handles.num_of_handles+new_bones,equi_coord,segmento,'Curved',0);
+        handles.new_handle_order{end}.proportion = 0.5;
+    end
+end
+
+%% Here we take care of nearby endpoints
+handles.num_of_handles = length(handles.new_handle_order);
+handles.coupled_endpoints = cell(handles.num_of_handles,1);
+handles.handles_visibility = ones(handles.num_of_handles,3);
+handles.bone_intersections = zeros(handles.num_of_handles,handles.num_of_handles);
+handles.intersection_points = [];
+handles.point_coord_clusters = [];
+handles.point_index_clusters = [];
+
+for i  = 1:handles.num_of_handles
+    if isequal(handles.new_handle_order{i}.type,'Curved')
+        P1 = handles.new_handle_order{i}.position(1,:);
+        P3 = handles.new_handle_order{i}.position(3,:);
+        handles.point_coord_clusters = [handles.point_coord_clusters; P1 ; P3];
+        handles.point_index_clusters = [handles.point_index_clusters; i 1; i 3];
+    end
+end
+raio_approx = 2*pi/100;
+[clustersCentroids,clustersGeoMedians,clustersXY, handles.clustersInd] = clusterXYpoints(handles.point_coord_clusters,raio_approx,1,'centroid','merge');
+
+handles.num_of_clusters = numel(handles.clustersInd);
+for i = 1:handles.num_of_clusters
+    for j = handles.clustersInd{i}
+        index = handles.point_index_clusters(j,:);
+        handles.new_handle_order{index(1)}.position(index(2),:) = clustersCentroids(i,:);
+        handles.new_handle_order{index(1)}.new_position = handles.new_handle_order{index(1)}.position;
+        sphere_coord = equi2sphere(handles.new_handle_order{index(1)}.position(1,:));
+        sphere_coord2 = equi2sphere(handles.new_handle_order{index(1)}.position(3,:));
+
+        mid_point = [(0.5*sphere_coord(1) + 0.5*sphere_coord2(1)) ...
+        (0.5*sphere_coord(2) + 0.5*sphere_coord2(2)) ...
+        (0.5*sphere_coord(3) + 0.5*sphere_coord2(3))];
+        mid_point = mid_point/sqrt(mid_point(1)^2 + mid_point(2)^2 +mid_point(3)^2);
+        mid_point = sphere2equi(mid_point);
+
+        handles.new_handle_order{index(1)}.position(2,:) = mid_point;
+        handles.new_handle_order{index(1)}.new_position = handles.new_handle_order{index(1)}.position;
+        
+        t = linspace(0,1,100);
+        parametric = [];
+        parametric(:,1) = (1-t)*sphere_coord(1) + t*sphere_coord2(1);
+        parametric(:,2) = (1-t)*sphere_coord(2) + t*sphere_coord2(2);
+        parametric(:,3) = (1-t)*sphere_coord(3) + t*sphere_coord2(3);
+        norma = sqrt(parametric(:,1).^2 + parametric(:,2).^2 + parametric(:,3).^2);
+        parametric(:,1) = parametric(:,1)./norma;
+        parametric(:,2) = parametric(:,2)./norma;
+        parametric(:,3) = parametric(:,3)./norma;
+        equi_coord_par = sphere2equi(parametric);
+        handles.new_handle_order{index(1)}.mesh_position = equi_coord_par;
+        handles.new_handle_order{index(1)}.new_mesh_position = equi_coord_par;
+    end
+end
+for i = 1:handles.num_of_clusters
+    if length(handles.clustersInd{i}) > 1
+        for j = handles.clustersInd{i}(2:end)
+            index = handles.point_index_clusters(j,:);
+            handles.handles_visibility(index(1),index(2)) = 0;
+        end
+    end
+end
+for i = 1:length(handles.new_handle_order)
+    if isequal(handles.new_handle_order{i}.type,'Curved')
+        if isequal(handles.new_handle_order{i}.mesh_position(1,:),handles.new_handle_order{i}.mesh_position(3,:))
+            handles.new_handle_order{i} = {};
+        end
+    end
+end
 handles.new_handle_order = handles.new_handle_order(~cellfun('isempty',handles.new_handle_order));
 handles.num_of_handles = length(handles.new_handle_order);
 handles.coupled_endpoints = cell(handles.num_of_handles,1);
@@ -967,35 +939,58 @@ handles.point_index_clusters = [];
 handles.clustersInd= [];
 handles.num_of_clusters = 0;
 % 
-% for i  = 1:handles.num_of_handles
-%     if isequal(handles.new_handle_order{i}.type,'Curved')
-%         P1 = handles.new_handle_order{i}.position(1,:);
-%         P3 = handles.new_handle_order{i}.position(3,:);
-%         handles.point_coord_clusters = [handles.point_coord_clusters; P1 ; P3];
-%         handles.point_index_clusters = [handles.point_index_clusters; i 1; i 3];
-%     end
-% end
-% raio_approx = 2*pi/100;
-% [clustersCentroids,clustersGeoMedians,clustersXY, handles.clustersInd] = clusterXYpoints(handles.point_coord_clusters,raio_approx,1,'centroid','merge');
-% 
-% handles.num_of_clusters = numel(handles.clustersInd);
-% for i = 1:handles.num_of_clusters
-%     for j = handles.clustersInd{i}
-%         index = handles.point_index_clusters(j,:);
-%         handles.new_handle_order{index(1)}.position(index(2),:) = clustersCentroids(i,:);
-%         handles.new_handle_order{index(1)}.new_position = handles.new_handle_order{index(1)}.position;
-%         handles.new_handle_order{index(1)}.mesh_position = sphere2equi(handles.V(knnsearch(handles.V,equi2sphere(handles.new_handle_order{index(1)}.position)),:));
-%     end
-% end
-% for i = 1:handles.num_of_clusters
-%     if length(handles.clustersInd{i}) > 1
-%         for j = handles.clustersInd{i}(2:end)
-%             index = handles.point_index_clusters(j,:);
-%             handles.handles_visibility(index(1),index(2)) = 0;
-%         end
-%     end
-% end
-% 
+for i  = 1:handles.num_of_handles
+    if isequal(handles.new_handle_order{i}.type,'Curved')
+        P1 = handles.new_handle_order{i}.position(1,:);
+        P3 = handles.new_handle_order{i}.position(3,:);
+        handles.point_coord_clusters = [handles.point_coord_clusters; P1 ; P3];
+        handles.point_index_clusters = [handles.point_index_clusters; i 1; i 3];
+    end
+end
+raio_approx = 2*pi/100;
+[clustersCentroids,clustersGeoMedians,clustersXY, handles.clustersInd] = clusterXYpoints(handles.point_coord_clusters,raio_approx,1,'centroid','merge');
+
+handles.num_of_clusters = numel(handles.clustersInd);
+for i = 1:handles.num_of_clusters
+    for j = handles.clustersInd{i}
+        index = handles.point_index_clusters(j,:);
+        handles.new_handle_order{index(1)}.position(index(2),:) = clustersCentroids(i,:);
+        handles.new_handle_order{index(1)}.new_position = handles.new_handle_order{index(1)}.position;
+        sphere_coord = equi2sphere(handles.new_handle_order{index(1)}.position(1,:));
+        sphere_coord2 = equi2sphere(handles.new_handle_order{index(1)}.position(3,:));
+
+        mid_point = [(0.5*sphere_coord(1) + 0.5*sphere_coord2(1)) ...
+        (0.5*sphere_coord(2) + 0.5*sphere_coord2(2)) ...
+        (0.5*sphere_coord(3) + 0.5*sphere_coord2(3))];
+        mid_point = mid_point/sqrt(mid_point(1)^2 + mid_point(2)^2 +mid_point(3)^2);
+        mid_point = sphere2equi(mid_point);
+
+        handles.new_handle_order{index(1)}.position(2,:) = mid_point;
+        handles.new_handle_order{index(1)}.new_position = handles.new_handle_order{index(1)}.position;
+        
+        t = linspace(0,1,100);
+        parametric = [];
+        parametric(:,1) = (1-t)*sphere_coord(1) + t*sphere_coord2(1);
+        parametric(:,2) = (1-t)*sphere_coord(2) + t*sphere_coord2(2);
+        parametric(:,3) = (1-t)*sphere_coord(3) + t*sphere_coord2(3);
+        norma = sqrt(parametric(:,1).^2 + parametric(:,2).^2 + parametric(:,3).^2);
+        parametric(:,1) = parametric(:,1)./norma;
+        parametric(:,2) = parametric(:,2)./norma;
+        parametric(:,3) = parametric(:,3)./norma;
+        equi_coord_par = sphere2equi(parametric);
+        handles.new_handle_order{index(1)}.mesh_position = equi_coord_par;
+        handles.new_handle_order{index(1)}.new_mesh_position = equi_coord_par;
+    end
+end
+for i = 1:handles.num_of_clusters
+    if length(handles.clustersInd{i}) > 1
+        for j = handles.clustersInd{i}(2:end)
+            index = handles.point_index_clusters(j,:);
+            handles.handles_visibility(index(1),index(2)) = 0;
+        end
+    end
+end
+
 % point_indices = [];
 % curved_bone_indices = [];
 % positions = [];
@@ -1007,14 +1002,14 @@ handles.num_of_clusters = 0;
 % for i = 1:handles.num_of_handles
 %     switch handles.new_handle_order{i}.type
 %         case 'Curved'
-%             indice1 = knnsearch(positions,handles.new_handle_order{i}.mesh_position(1,:));
-%             indice2 = knnsearch(positions,handles.new_handle_order{i}.mesh_position(3,:));
+%             indice1 = dsearchn(positions,handles.new_handle_order{i}.mesh_position(1,:));
+%             indice2 = dsearchn(positions,handles.new_handle_order{i}.mesh_position(3,:));
 %             curved_bone_indices = cat(1,curved_bone_indices,[indice1 indice2]);
 %         case 'Point'
-%             indice = knnsearch(positions,handles.new_handle_order{i}.mesh_position(1,:));
+%             indice = dsearchn(positions,handles.new_handle_order{i}.mesh_position(1,:));
 %             point_indices = cat(1,point_indices,indice);
 %         case 'Closed_Cage'
-%             indice = knnsearch(positions,handles.new_handle_order{i}.mesh_position(1,:));
+%             indice = dsearchn(positions,handles.new_handle_order{i}.mesh_position(1,:));
 %             point_indices = cat(1,point_indices,indice);
 %     end
 % end
@@ -1052,7 +1047,7 @@ if ~isempty(handles.region_positions)
     is_inside = [is_inside,is_inside];
     is_inside = is_inside.*handles.equirec_points;
     is_inside(is_inside(:,1)==0,:) = [];
-    indices_equi = knnsearch(handles.V,equi2sphere(is_inside));
+    indices_equi = dsearchn(handles.V,equi2sphere(is_inside));
     is_conform(indices_equi) = 1;
 end
 
@@ -1091,6 +1086,9 @@ end
 % msg = strcat('Total computation time: ', num2str(time_string),' seconds');
 % h = msgbox(msg,'Total time');
 % uiwait(h);
+handles.all_handles = handles.new_handle_order;
+
+
 transformation_interface(handles);
 
 closereq;

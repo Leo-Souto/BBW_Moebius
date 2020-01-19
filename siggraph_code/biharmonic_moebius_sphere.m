@@ -9,7 +9,6 @@ positions = [];
 is_conform = [];
 
 for i = 1:num_of_handles
-    disp(handles{i})
     switch handles{i}.type
         case 'Point'
             positions = cat(1,positions,handles{i}.new_position(1,:));
@@ -26,7 +25,6 @@ for i = 1:num_of_handles
             point_indices = [point_indices,indice];
 %             new_handle_order{end+1} = handles{i};
         case 'Curved'
-            disp(handles{i}.new_mesh_position)
             indice = dsearchn(positions,handles{i}.new_mesh_position);
             curved_bone_indices = [curved_bone_indices; indice'];
     end
@@ -48,21 +46,24 @@ for i=1:num_of_handles
 end
 % figure;
 % trisurf(F,V(:,1),V(:,2),V(:,3),W(:,4))
-disp(W)
 %% irregular mesh to grid weight interpolation
 
 V_equi = sphere2equi(V);
-[SV,~,~] = remove_duplicate_vertices(V_equi,1e-7);
+size(V_equi)
+[SV,SVI,~] = remove_duplicate_vertices(V_equi,1e-7);
+size(SV)
+size(W)
 index = dsearchn(SV,V_equi);
-W = W(index,:);
+W = W(SVI,:);
+size(W)
 nx = 150;
 x = linspace(-pi+1e-6,pi-1e-6,nx);
 y = linspace(pi/2-1e-6,-pi/2+1e-6,nx/2);
 [X,Y]=meshgrid(x,y);
 %%%%%%%%tem que trocar griddata por scattered interpolant pra ganhar
 %%%%%%%%performance
-Interpolant = scatteredInterpolant(V_equi,W(:,1));
-non_expanded = []; %from irregular to regular mesh
+Interpolant = scatteredInterpolant(SV,W(:,1));
+non_expanded = zeros(nx/2,nx,num_of_handles); %from irregular to regular mesh
 for i  = 1:num_of_handles
     Interpolant.Values = W(:,i);
     non_expanded(:,:,i) = Interpolant(X,Y);
@@ -76,7 +77,7 @@ ny = size_final(1);
 x = linspace(-pi+1e-6,pi-1e-6,nx);
 y = linspace(pi/2-1e-6,-pi/2+1e-6,ny);
 [U,V]=meshgrid(x,y);
-W_expanded = []; %expand to image size
+W_expanded = zeros(ny,nx,num_of_handles); %expand to image size
 for i  = 1:num_of_handles
     W_expanded(:,:,i) = qinterp2(X,Y,non_expanded(:,:,i),U,V);
 end

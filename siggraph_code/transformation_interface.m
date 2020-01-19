@@ -329,62 +329,63 @@ elseif isequal(handles.all_handles{i}.type,'Curved')
     handles.all_handles{i}.new_position = [P1_n;P2_n;P3_n];
     handles.T_coefs(i,:) = Calculate_Transformation([P1;P2;P3],[P1_n;P2_n;P3_n]);
     handles.all_handles{i}.new_mesh_position = apply_transf_plot(handles.all_handles{i}.mesh_position,'Curved',handles.T_coefs(i,:),1);
-%     if iii ~= 3
-%         index_row = find(ismember(handles.point_index_clusters,[i iii],'rows'));
-%         index_cluster = [];
-%         for j = 1:handles.num_of_clusters
-%             if find(handles.clustersInd{j} == index_row)
-%                 index_cluster = j;
-%             end
-%         end
-%         
-%         if ~isempty(index_cluster)
-%             for j = handles.clustersInd{index_cluster}
-%                 i_c_p = handles.point_index_clusters(j,:);
-%                 handles.all_handles{i_c_p(1)}.new_position(i_c_p(2),:) = P_new;
-%                 P1_n = handles.all_handles{i_c_p(1)}.new_position(1,:);
-%                 P3_n = handles.all_handles{i_c_p(1)}.new_position(3,:);
-%                 switch get(handles.rectify,'Value')
-%                     case 1
-%                         prop = handles.all_handles{i_c_p(1)}.proportion;
-%                         equi_coord_par = apply_transf_plot(handles.plot_pos{i_c_p(1)},'Curved',handles.T_coefs(i_c_p(1),:),1);
-%                         deriv = diff(equi_coord_par(:,1));
-%                         index = find(abs(deriv) > 0.1);
-%                         index = sort(index);
-%                         if ~isempty(index)
-%                             if (P1_n(1) - P3_n(1))> P1_n(1)
-%                                 P2_n = [P1_n(1)*(1-prop) + prop*(P3_n(1)+2*pi) P1_n(2)*(1-prop)+prop*P3_n(2)] ;
-%                             elseif (P1_n(1) - P3_n(1))< P1_n(1)
-%                                 P2_n = [P1_n(1)*(1-prop) + prop*(P3_n(1)+2*pi) P1_n(2)*(1-prop)+prop*P3_n(2)] ;
-%                             end
-%                         else
-%                             P2_n = P1_n*(1-prop) + prop*P3_n;
-%                         end
-%                     case 0
-%                         if handles.rectify_atual(i_c_p(1)) == 1
-%                             prop = handles.all_handles{i_c_p(1)}.proportion;
-%                             equi_coord_par = apply_transf_plot(handles.plot_pos{i_c_p(1)},'Curved',handles.T_coefs(i_c_p(1),:),1);
-%                             deriv = diff(equi_coord_par(:,1));
-%                             index = find(abs(deriv) > 0.1);
-%                             index = sort(index);
-%                             if ~isempty(index)
-%                                 if (P1_n(1) - P3_n(1))> P1_n(1)
-%                                     P2_n = [P1_n(1)*(1-prop) + prop*(P3_n(1)+2*pi) P1_n(2)*(1-prop)+prop*P3_n(2)] ;
-%                                 elseif (P1_n(1) - P3_n(1))< P1_n(1)
-%                                     P2_n = [P1_n(1)*(1-prop) + prop*(P3_n(1)-2*pi) P1_n(2)*(1-prop)+prop*P3_n(2)] ;
-%                                 end
-%                             else
-%                                 P2_n = P1_n*(1-prop) + prop*P3_n;
-%                             end
-%                         else
-%                             P2_n = handles.all_handles{i_c_p(1)}.new_position(2,:);
-%                         end
-%                 end
-%                 handles.all_handles{i_c_p(1)}.new_position = [P1_n;P2_n;P3_n];
-%                 handles.T_coefs(i_c_p(1),:) = Calculate_Transformation(handles.all_handles{i_c_p(1)}.position,handles.all_handles{i_c_p(1)}.new_position);
-%             end
-%         end
-%     end
+    if iii ~= 2
+        disp(handles.point_index_clusters)
+        index_row = find(ismember(handles.point_index_clusters,[i iii],'rows'));
+        index_cluster = [];
+        for j = 1:handles.num_of_clusters
+            if find(handles.clustersInd{j} == index_row)
+                index_cluster = j;
+            end
+        end
+        
+        if ~isempty(index_cluster)
+            for j = handles.clustersInd{index_cluster}
+                i_c_p = handles.point_index_clusters(j,:);
+                handles.all_handles{i_c_p(1)}.new_position(i_c_p(2),:) = P_new;
+                P1_n = handles.all_handles{i_c_p(1)}.new_position(1,:);
+                P3_n = handles.all_handles{i_c_p(1)}.new_position(3,:);
+                switch get(handles.rectify,'Value')
+                    case 1
+                        prop = handles.all_handles{i_c_p(1)}.proportion;
+                        equi_coord_par = apply_transf_plot(handles.plot_pos{i_c_p(1)},'Curved',handles.T_coefs(i_c_p(1),:),1);
+                        deriv = diff(equi_coord_par(:,1));
+                        index = find(abs(deriv) > 0.1);
+                        index = sort(index);
+                        if ~isempty(index)
+                            if (P1_n(1) - P3_n(1))> P1_n(1)
+                                P2_n = [P1_n(1)*(1-prop) + prop*(P3_n(1)+2*pi) P1_n(2)*(1-prop)+prop*P3_n(2)] ;
+                            elseif (P1_n(1) - P3_n(1))< P1_n(1)
+                                P2_n = [P1_n(1)*(1-prop) + prop*(P3_n(1)+2*pi) P1_n(2)*(1-prop)+prop*P3_n(2)] ;
+                            end
+                        else
+                            P2_n = P1_n*(1-prop) + prop*P3_n;
+                        end
+                    case 0
+                        if handles.rectify_atual(i_c_p(1)) == 1
+                            prop = handles.all_handles{i_c_p(1)}.proportion;
+                            equi_coord_par = apply_transf_plot(handles.plot_pos{i_c_p(1)},'Curved',handles.T_coefs(i_c_p(1),:),1);
+                            deriv = diff(equi_coord_par(:,1));
+                            index = find(abs(deriv) > 0.1);
+                            index = sort(index);
+                            if ~isempty(index)
+                                if (P1_n(1) - P3_n(1))> P1_n(1)
+                                    P2_n = [P1_n(1)*(1-prop) + prop*(P3_n(1)+2*pi) P1_n(2)*(1-prop)+prop*P3_n(2)] ;
+                                elseif (P1_n(1) - P3_n(1))< P1_n(1)
+                                    P2_n = [P1_n(1)*(1-prop) + prop*(P3_n(1)-2*pi) P1_n(2)*(1-prop)+prop*P3_n(2)] ;
+                                end
+                            else
+                                P2_n = P1_n*(1-prop) + prop*P3_n;
+                            end
+                        else
+                            P2_n = handles.all_handles{i_c_p(1)}.new_position(2,:);
+                        end
+                end
+                handles.all_handles{i_c_p(1)}.new_position = [P1_n;P2_n;P3_n];
+                handles.T_coefs(i_c_p(1),:) = Calculate_Transformation(handles.all_handles{i_c_p(1)}.position,handles.all_handles{i_c_p(1)}.new_position);
+            end
+        end
+    end
 elseif isequal(handles.all_handles{i}.type,'Closed_Cage')
     P1 = handles.all_handles{i}.position(1,:);
     P2 = handles.all_handles{i}.position(2,:);
