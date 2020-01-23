@@ -1210,11 +1210,16 @@ switch get(hObject,'Value')
                 handles.T_coefs(i,:) = Calculate_Transformation(handles.all_handles{i}.position,handles.all_handles{i}.new_position);
             end
         end
+        for i = 1:handles.num_of_handles
+            if (isequal(handles.all_handles{i}.type,'Curved'))
+                handles.all_handles{i}.new_mesh_position = apply_transf_plot(handles.all_handles{i}.mesh_position,'Curved',handles.T_coefs(i,:),1);
+            end
+        end
+handles.matlabImage = biharmonic_moebius_sphere(handles.originalimage,handles.V,handles.F,handles.all_handles,handles.T_coefs,...
+    [handles.imagesize(1) handles.imagesize(2)]);
         axes(handles.image)
         cla
-        
-        handles.matlabImage = biharmonic_moebius_sphere(handles.originalimage,handles.equi_points,handles.W,handles.T_coefs,...
-            [handles.imagesize(1) handles.imagesize(2)]);
+
         handles.img_handle = image(handles.matlabImage);
         hold on
         
@@ -1729,11 +1734,15 @@ if ~isempty(handles.current_handle)
                         handles.T_coefs(i,:) = Calculate_Transformation(handles.all_handles{i}.position,handles.all_handles{i}.new_position);
                     end
                 end
+                for i = 1:handles.num_of_handles
+                    if (isequal(handles.all_handles{i}.type,'Curved'))
+                        handles.all_handles{i}.new_mesh_position = apply_transf_plot(handles.all_handles{i}.mesh_position,'Curved',handles.T_coefs(i,:),1);
+                    end
+                end
+                handles.matlabImage = biharmonic_moebius_sphere(handles.originalimage,handles.V,handles.F,handles.all_handles,handles.T_coefs,...
+                [handles.imagesize(1) handles.imagesize(2)]);
                 axes(handles.image)
                 cla
-                
-                handles.matlabImage = biharmonic_moebius_sphere(handles.originalimage,handles.equi_points,handles.W,handles.T_coefs,...
-                    [handles.imagesize(1) handles.imagesize(2)]);
                 handles.img_handle = image(handles.matlabImage);
                 hold on
                 
