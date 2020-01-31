@@ -4,17 +4,34 @@ function [V,F] = adaptive_mesh(P_handles)
 TR = IcosahedronMesh;
 TR = SubdivideSphericalMesh(TR, 2);
 
+% tsurf(TR.ConnectivityList,TR.Points)
+% axis equal
+% hold on
+% plot3(P_handles(:,1),P_handles(:,2),P_handles(:,3),'.r','MarkerSize',20);
+
 B = barycenter(TR.Points,TR.ConnectivityList);
+% plot3(B(:,1),B(:,2),B(:,3),'.k','MarkerSize',20);
+% cameratoolbar
+% input('')
+
 distances = zeros(size(TR.ConnectivityList,1),1);
 
 for i=1:size(TR.ConnectivityList,1)
-    for j = 1: size(P_handles,1)
-        distances(i,j) = norm(B(i)-P_handles(j,:));
+    for j = 1:size(P_handles,1)
+        distances(i,j) = norm(B(i,:)-P_handles(j,:));
     end
 end
 distances = min(distances,[],2);
 max_iter = 5;
-subdivisions = round(max_iter-min(((max_iter/2)*distances),max_iter));
+% figure
+% trisurf(TR.ConnectivityList,TR.Points(:,1),TR.Points(:,2),TR.Points(:,3),distances)
+% colorbar
+% axis equal
+% hold on
+% plot3(P_handles(:,1),P_handles(:,2),P_handles(:,3),'.r','MarkerSize',20);
+% cameratoolbar
+% input('')
+subdivisions = round(min(((max_iter/3)*(1./(distances))),max_iter));
 
 for k=1:max_iter
     NewConnectivityList = TR.ConnectivityList(subdivisions==k,:);
