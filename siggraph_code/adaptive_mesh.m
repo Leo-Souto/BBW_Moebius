@@ -1,19 +1,38 @@
-function [V,F] = adaptive_mesh(P_handles)
+function [V,F] = adaptive_mesh(P_handles,max_iter)
+% ADAPTIVE_MESH Computes a mesh that if finer closer to handles
+%
+% [V,F] = adaptive_mesh(P_handles,max_iter)
+%
+% Inputs:
+%   P_handles: #P_handles x 3 matrix of handle coordinates
+%   max_iter: maximum number of subdivisions of a triangles from the
+%   original icosahedral mesh
+% Output:
+%   V: #V x 3 matrix of 3d vertices
+%   F: #F x 3 matrix of indices into V
+% 
 
 % 3rd attempt
+tic
 TR = IcosahedronMesh;
 TR = SubdivideSphericalMesh(TR, 2);
+disp('initial subdivision')
+toc
 
 % tsurf(TR.ConnectivityList,TR.Points)
 % axis equal
 % hold on
 % plot3(P_handles(:,1),P_handles(:,2),P_handles(:,3),'.r','MarkerSize',20);
 
+tic
 B = barycenter(TR.Points,TR.ConnectivityList);
+disp('barycenter calculation')
+toc
 % plot3(B(:,1),B(:,2),B(:,3),'.k','MarkerSize',20);
 % cameratoolbar
 % input('')
 
+tic
 distances = zeros(size(TR.ConnectivityList,1),1);
 
 for i=1:size(TR.ConnectivityList,1)
@@ -22,7 +41,8 @@ for i=1:size(TR.ConnectivityList,1)
     end
 end
 distances = min(distances,[],2);
-max_iter = 5;
+disp('distance calculation')
+toc
 % figure
 % trisurf(TR.ConnectivityList,TR.Points(:,1),TR.Points(:,2),TR.Points(:,3),distances)
 % colorbar
@@ -31,8 +51,13 @@ max_iter = 5;
 % plot3(P_handles(:,1),P_handles(:,2),P_handles(:,3),'.r','MarkerSize',20);
 % cameratoolbar
 % input('')
-subdivisions = round(min(((max_iter/3)*(1./(distances))),max_iter));
 
+tic
+subdivisions = round(min(((max_iter/3)*(1./(distances))),max_iter));
+disp('number of extra subdivisions calculation')
+toc
+
+tic
 for k=1:max_iter
     NewConnectivityList = TR.ConnectivityList(subdivisions==k,:);
     if (~isempty(NewConnectivityList))
@@ -42,24 +67,42 @@ for k=1:max_iter
         TR_sub{k}.Points = [];
     end
 end
+disp('additional subdivisions')
+toc
 
+tic
 total_points = 0;
 for k=1:max_iter
     total_points = total_points+size(TR_sub{k}.Points,1);
 end
+disp('total points calculation')
+toc
 
+tic
 final_points = zeros(total_points,3);
 current_number_of_points = 0;
 for k=1:max_iter
     final_points(current_number_of_points+1:current_number_of_points+size(TR_sub{k}.Points,1),:) = TR_sub{k}.Points;
     current_number_of_points = current_number_of_points + size(TR_sub{k}.Points,1);
 end
+disp('selection of final points')
+toc
 
 % plot3(final_points(:,1),final_points(:,2),final_points(:,3),'.')
 % axis equal
 
-TR_conv = convhull(final_points);
+tic
+[final_points,~,~] = remove_duplicate_vertices(final_points,1e-7);
+disp('remove duplicate')
+toc
+tic
+TR_conv = convhulln(final_points);
+disp('convex hull')
+toc
+tic
 TR = triangulation(TR_conv,final_points);
+disp('final triangulation')
+toc
 
 F = TR.ConnectivityList;
 V = TR.Points;
