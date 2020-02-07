@@ -542,7 +542,6 @@ if ~isempty(handles.all_cages)
         end
     end
 end
-handles.all_cages = handles.new_cages;
 handles.all_handles = handles.new_handle_order;
 %% this creates a cage-edge list with the weights
 handles.cage_edge_list = {};
@@ -568,7 +567,7 @@ if ~isempty(handles.new_cages)
         parametric(:,3) = parametric(:,3)./norma;
         equi_coord_par = sphere2equi(parametric);
         handles.cage_edge_list{end+1} = bm_cage_edge([index1 index2],equi_coord_par);
-        handles.handle_to_edge_list = [handles.handle_to_edge_list; index1 length(handles.cage_edge_list); index2 length(handles.cage_edge_list)];
+        
         end
     end
 end

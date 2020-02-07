@@ -406,7 +406,8 @@ elseif isequal(handles.all_handles{i}.type,'Closed_Cage')
     end
 end
 
-handles.matlabImage = biharmonic_moebius_sphere(handles.originalimage,handles,[handles.imagesize(1) handles.imagesize(2)]);
+handles.matlabImage = biharmonic_moebius_sphere(handles.originalimage,handles,...
+    [handles.imagesize(1) handles.imagesize(2)]);
 axes(handles.image)
 cla
 handles.img_handle = image(handles.matlabImage);
@@ -441,7 +442,7 @@ for k = 1:length(handles.cage_edge_list)
             f = plot(equi_coord_par_pix(:,1), equi_coord_par_pix(:,2),'Color',[1 1 1],'Parent', handles.image);
             handles.cages_plot{end+1} = f;
         end
- end
+    end
 % end
 for j= 1:handles.num_of_handles
     pix_pos = equi2pixels(handles.all_handles{j}.new_position,handles.imagesize);
@@ -854,15 +855,21 @@ if ~isempty(handles.current_handle)
     axes(handles.image)
     cla
     
-handles.matlabImage = biharmonic_moebius_sphere(handles.originalimage,handles,[handles.imagesize(1) handles.imagesize(2)]);
-
+    handles.matlabImage = biharmonic_moebius_sphere(handles.originalimage,handles.equi_points,handles.W,handles.T_coefs,...
+        [handles.imagesize(1) handles.imagesize(2)]);
     
     handles.img_handle = image(handles.matlabImage);
     hold on
     handles.handles_plot = {};
     handles.cages_plot = {};
-for k = 1:length(handles.cage_edge_list)
-        equi_coord_par = handles.cage_edge_list{k}.new_position;
+    for k = 1:length(handles.all_cages)
+        for j = 1:length(handles.all_cages{k})-1
+            index1 = handles.all_cages{k}(j);
+            index2 = handles.all_cages{k}(j+1);
+            Weight = handles.cage_weights{k}{j};
+            transf = [handles.T_coefs(index1,:);handles.T_coefs(index2,:)];
+            position = handles.cage_plot_pos{k}{j};
+            equi_coord_par = apply_transf_plot(position,'Closed_Cage',transf,Weight);
             deriv = diff(equi_coord_par(:,1));
             index = find(abs(deriv) > 0.1);
             index = sort(index);
@@ -882,7 +889,8 @@ for k = 1:length(handles.cage_edge_list)
                 f = plot(equi_coord_par_pix(:,1), equi_coord_par_pix(:,2),'Color',[1 1 1],'Parent', handles.image);
                 handles.cages_plot{end+1} = f;
             end
-end
+        end
+    end
     for j= 1:handles.num_of_handles
         pix_pos = equi2pixels(handles.all_handles{j}.new_position,handles.imagesize);
         if isequal(handles.all_handles{j}.type,'Curved')
@@ -1247,8 +1255,8 @@ switch get(hObject,'Value')
                 handles.all_handles{i}.new_mesh_position = apply_transf_plot(handles.all_handles{i}.mesh_position,'Curved',handles.T_coefs(i,:),1);
             end
         end
-handles.matlabImage = biharmonic_moebius_sphere(handles.originalimage,handles,[handles.imagesize(1) handles.imagesize(2)]);
-
+handles.matlabImage = biharmonic_moebius_sphere(handles.originalimage,handles.V,handles.F,handles.all_handles,handles.T_coefs,...
+    [handles.imagesize(1) handles.imagesize(2)]);
         axes(handles.image)
         cla
 
@@ -1257,8 +1265,14 @@ handles.matlabImage = biharmonic_moebius_sphere(handles.originalimage,handles,[h
         
         handles.handles_plot = {};
         handles.cages_plot = {};
-for k = 1:length(handles.cage_edge_list)
-        equi_coord_par = handles.cage_edge_list{k}.new_position;
+        for k = 1:length(handles.all_cages)
+            for j = 1:length(handles.all_cages{k})-1
+                index1 = handles.all_cages{k}(j);
+                index2 = handles.all_cages{k}(j+1);
+                Weight = handles.cage_weights{k}{j};
+                transf = [handles.T_coefs(index1,:);handles.T_coefs(index2,:)];
+                position = handles.cage_plot_pos{k}{j};
+                equi_coord_par = apply_transf_plot(position,'Closed_Cage',transf,Weight);
                 deriv = diff(equi_coord_par(:,1));
                 index = find(abs(deriv) > 0.1);
                 index = sort(index);
@@ -1279,6 +1293,7 @@ for k = 1:length(handles.cage_edge_list)
                     handles.cages_plot{end+1} = f;
                 end
             end
+        end
         for j= 1:handles.num_of_handles
             pix_pos = equi2pixels(handles.all_handles{j}.new_position,handles.imagesize);
             if isequal(handles.all_handles{j}.type,'Curved')
@@ -1734,7 +1749,7 @@ if ~isempty(handles.current_handle)
                         for j = 1:size(solution_index{i},1)
                             ind_1 = solution_index{i}(j,1);
                             ind_2 = solution_index{i}(j,2);
-                            if isequal(handles.all_handles{ind_1}.type,'Point')
+                            if isequal(handles.all_handles{ind_1}.type,'Point') || isequal(handles.all_handles{ind_1}.type,'Closed_Cage'))
                                 xlength = handles.all_handles{ind_1}.new_position(2,1) - handles.all_handles{ind_1}.new_position(1,1);
                                 ylength = handles.all_handles{ind_1}.new_position(2,2) - handles.all_handles{ind_1}.new_position(1,2);
                                 handles.all_handles{ind_1}.new_position(ind_2,:) = solution(i,:);
@@ -1784,8 +1799,8 @@ if ~isempty(handles.current_handle)
                         handles.all_handles{i}.new_mesh_position = apply_transf_plot(handles.all_handles{i}.mesh_position,'Curved',handles.T_coefs(i,:),1);
                     end
                 end
-handles.matlabImage = biharmonic_moebius_sphere(handles.originalimage,handles,[handles.imagesize(1) handles.imagesize(2)]);
-
+                handles.matlabImage = biharmonic_moebius_sphere(handles.originalimage,handles.V,handles.F,handles.all_handles,handles.T_coefs,...
+                [handles.imagesize(1) handles.imagesize(2)]);
                 axes(handles.image)
                 cla
                 handles.img_handle = image(handles.matlabImage);
@@ -1793,8 +1808,14 @@ handles.matlabImage = biharmonic_moebius_sphere(handles.originalimage,handles,[h
                 
                 handles.handles_plot = {};
                 handles.cages_plot = {};
-for k = 1:length(handles.cage_edge_list)
-        equi_coord_par = handles.cage_edge_list{k}.new_position;
+                for k = 1:length(handles.all_cages)
+                    for j = 1:length(handles.all_cages{k})-1
+                        index1 = handles.all_cages{k}(j);
+                        index2 = handles.all_cages{k}(j+1);
+                        Weight = handles.cage_weights{k}{j};
+                        transf = [handles.T_coefs(index1,:);handles.T_coefs(index2,:)];
+                        position = handles.cage_plot_pos{k}{j};
+                        equi_coord_par = apply_transf_plot(position,'Closed_Cage',transf,Weight);
                         deriv = diff(equi_coord_par(:,1));
                         index = find(abs(deriv) > 0.1);
                         index = sort(index);
@@ -1815,6 +1836,7 @@ for k = 1:length(handles.cage_edge_list)
                             handles.cages_plot{end+1} = f;
                         end
                     end
+                end
                 for j= 1:handles.num_of_handles
                     pix_pos = equi2pixels(handles.all_handles{j}.new_position,handles.imagesize);
                     if isequal(handles.all_handles{j}.type,'Curved')

@@ -191,21 +191,8 @@ function [b,bc] = new_boundary_conditions(V,F,C,P,E,CE,CB,CCE,bone_list,cage_lis
         % loop over curved bones
     for ii = 1:size(CB,1)
         bone_points = discretization{bone_list(ii)};
-        init = bone_points(1:end-1,:);
-        fim = bone_points(2:end,:);
-        [t,sqr_d] = project_to_lines(V,init,fim);
-        [min_dist,ind] = min(sqr_d,[],2);
-        tam = size(bone_points,1);
-        t = (ind)/tam;
-        on_edge = ((abs(min_dist) < h*1e-6) & ((t > -1e-10) & (t < (1+1e-10))));
-%         disp([t min_dist on_edge])
-%         figure;
-%         trisurf(F,V(:,1),V(:,2),V(:,3))
-%         hold on
-% %         pts = V(on_edge,:)
-%         scatter3(V(on_edge,1),V(on_edge,2),V(on_edge,3))
-%         plot3(discretization{bone_list(ii)}(:,1),discretization{bone_list(ii)}(:,2),discretization{bone_list(ii)}(:,3))
-%         hold off
+    [t,sqr_d] = project_to_lines(V,,C(E(ii,2),:));
+
 %       on_edge = dsearchn(V,C(CB(ii,:),:));
 %       on_edge = zeros(size(V,1),1);
 %       on_edge(indices) = 1;
@@ -247,23 +234,30 @@ function [b,bc] = new_boundary_conditions(V,F,C,P,E,CE,CB,CCE,bone_list,cage_lis
 
     % loop over curved cage edges
     for( ii = 1:size(CCE,1) )
-      bone_points = discretization{cage_list(ii)};
-        init = bone_points(1:end-1,:);
-        fim = bone_points(2:end,:);
-        [t,sqr_d] = project_to_lines(V,init,fim);
-        [min_dist,ind] = min(sqr_d,[],2);
-        tam = size(bone_points,1);
-        t = (ind)/tam;
-        on_edge = ((abs(min_dist) < h*1e-6) & ((t > -1e-10) & (t < (1+1e-10))));
-%         disp(on_edge)
-%     figure;
-%         trisurf(F,V(:,1),V(:,2),V(:,3))
-%         hold on
-% %         pts = V(on_edge,:)
-%         scatter3(V(on_edge,1),V(on_edge,2),V(on_edge,3))
-%         plot3(discretization{cage_list(ii)}(:,1),discretization{cage_list(ii)}(:,2),discretization{cage_list(ii)}(:,3))
-%         hold off
+      %Calcula os coefs do plano que contém o circulo
+      [aplane, bplane, cplane] = bm_planecoeffs(C(P(CCE(ii,1)),:),C(P(CCE(ii,2)),:));
+      if abs(cplane) <= 1e-5
+        cplane = 1e-4;
+      end
+      %calcula a distancia dos pontos em relacao ao plano
+      [plane_distance] = bm_point2planedist(V,aplane, bplane, cplane, 0);
+      %cria o terceiro ponto que forma o triangulo
+      [xp, yp, zp] = bm_createtriangle(C(P(CCE(ii,1)),:),C(P(CCE(ii,2)),:),1);
+      P_trig = [xp yp zp];
+      %projeta os pontos no plano criado
+      V_proj = bm_projpoint2plane(V,aplane,bplane,cplane,0);
+      %calcula as coordenadas baricentricas dos pontos projetados
+      Bar_coords = barycentric_coordinates(V_proj,ones(size(V_proj,1),1)*C(P(CCE(ii,1)),:),ones(size(V_proj,1),1)*C(P(CCE(ii,2)),:),ones(size(V_proj,1),1)*P_trig);
+      Bar_1 = Bar_coords(:,1);
+      Bar_2 = Bar_coords(:,2);
+      Bar_3 = Bar_coords(:,3);
+      
+%       [t,sqr_d] = project_to_lines(V,C(P(CCE(ii,1)),:),C(P(CCE(ii,2)),:));
+            t = bm_intersec_retas(V_proj,C(P(CCE(ii,1)),:),C(P(CCE(ii,2)),:));
 
+      on_edge = ((t > -1e-6) & (t < 1+1e-6) & (abs(plane_distance) < h) & ...
+    ((Bar_1 > -1e-5) & (Bar_2 > -1e-5) & (Bar_3 > -1e-5) )  & (Bar_1+Bar_2+Bar_3 <= 1+1e-5));
+% 
 %       [t,sqr_d] = project_to_lines(V,C(P(CCE(ii,1)),:),C(P(CCE(ii,2)),:));
 %       on_edge = ((abs(sqr_d) < h*sqr_d_tol) & ((t > -1e-10) & (t < (1+1e-10))));
       % get rid of any NaNs on these rows

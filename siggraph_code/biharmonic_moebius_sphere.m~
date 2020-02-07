@@ -105,9 +105,9 @@ soma = sum(W,2);
 for i=1:num_of_handles
    W(:,i) = W(:,i)./soma; 
 end
-% for i =1:num_of_handles
-% figure;
-% trisurf(F,V(:,1),V(:,2),V(:,3),W(:,i),'FaceColor','interp')
+for i =1:num_o?f_handles
+figure;
+trisurf(F,V(:,1),V(:,2),V(:,3),W(:,5),'FaceColor','interp')
 % end
 
 %% irregular mesh to grid weight interpolation
