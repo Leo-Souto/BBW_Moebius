@@ -8,12 +8,16 @@ num_of_handles = length(T_coefs(:,1));
 positions = [];
 is_conform = [];
 
+handle_indices = [];
+
 for i = 1:num_of_handles
     switch handles{i}.type
         case 'Point'
             positions = cat(1,positions,handles{i}.new_position(1,:));
+            handle_indices = cat(1,handle_indices,i*ones(size(handles{i}.new_position(1,:),1),1));
         case 'Curved'
             positions = cat(1,positions,handles{i}.new_mesh_position);
+            handle_indices = cat(1,handle_indices,i*ones(size(handles{i}.new_mesh_position,1),1));
     end
 end
 point_indices = [];
@@ -29,6 +33,8 @@ for i = 1:num_of_handles
             curved_bone_indices = [curved_bone_indices; indice'];
     end
 end
+disp('biharmonic_moebius_sphere.m: Listing handle points')
+[equi2sphere(positions) handle_indices]
 V = [V; equi2sphere(positions)];
 F = convhull(V);
 %computing spherical boundary conditions and biharmonic weights

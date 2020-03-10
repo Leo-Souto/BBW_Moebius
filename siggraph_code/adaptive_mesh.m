@@ -12,6 +12,9 @@ function [V,F] = adaptive_mesh(P_handles,max_iter)
 %   F: #F x 3 matrix of indices into V
 % 
 
+handle_indices = P_handles(:,2);
+P_handles = P_handles(:,1:3);
+
 % 3rd attempt
 tic
 TR = IcosahedronMesh;
@@ -33,14 +36,25 @@ toc
 % input('')
 
 tic
-distances = zeros(size(TR.ConnectivityList,1),1);
+% distances = zeros(size(TR.ConnectivityList,1),1);
 
-for i=1:size(TR.ConnectivityList,1)
-    for j = 1:size(P_handles,1)
-        distances(i,j) = norm(B(i,:)-P_handles(j,:));
-    end
+% for i=1:size(TR.ConnectivityList,1)
+%     for j = 1:size(P_handles,1)
+% %         distances(i,j) = atan2(norm(cross(B(i,:),P_handles(j,:))),dot(B(i,:),P_handles(j,:)));
+%         distances(i,j) = acos(dot(B(i,:),P_handles(j,:)));
+% %         distances(i,j) = norm(B(i,:)-P_handles(j,:));
+%     end
+% end
+distances = acos(B*P_handles');
+[distances_1,idx] = min(distances,[],2);
+
+distances_2 = zeros(size(idx,1),1);
+for k=1:size(idx,1)
+    J = find(handle_indices == handle_indices(idx(k)));
+    new_distances = distances(k,setdiff(1:size(handle_indices,1),J));
+    distances_2(k) = min(new_distances);
 end
-distances = min(distances,[],2);
+distances = 0.5*distances_1+0.5*distances_2;
 disp('distance calculation')
 toc
 % figure
@@ -53,7 +67,9 @@ toc
 % input('')
 
 tic
-subdivisions = round(min(((max_iter/3)*(1./(distances))),max_iter));
+% subdivisions = round(min(((max_iter/3)*(1./(distances))),max_iter));
+subdivisions = round(kumaraswamy(distances,1,max_iter,pi,0));
+% subdivisions = round(5*(1-(distances/pi)).^4);
 disp('number of extra subdivisions calculation')
 toc
 
@@ -99,13 +115,13 @@ tic
 TR_conv = convhulln(final_points);
 disp('convex hull')
 toc
-tic
-TR = triangulation(TR_conv,final_points);
-disp('final triangulation')
-toc
+% tic
+% TR = triangulation(TR_conv,final_points);
+% disp('final triangulation')
+% toc
 
-F = TR.ConnectivityList;
-V = TR.Points;
+F = TR_conv;
+V = final_points;
 
 % % 2nd attempt: STILL A BIT IREGULAR
 % TR = IcosahedronMesh;
