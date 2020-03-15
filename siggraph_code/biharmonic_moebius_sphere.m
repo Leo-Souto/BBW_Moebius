@@ -8,20 +8,15 @@ num_of_handles = length(handles.T_coefs(:,1));
 positions = [];
 is_conform = [];
 
-handle_indices = [];
-
 discretization = {};
 for i = 1:num_of_handles
     switch handles.all_handles{i}.type
         case 'Point'
             positions = cat(1,positions,handles.all_handles{i}.new_position(1,:));
-            handle_indices = cat(1,handle_indices,i*ones(size(handles{i}.new_position(1,:),1),1));
         case 'Closed_Cage'
             positions = cat(1,positions,handles.all_handles{i}.new_position(1,:));
-            handle_indices = cat(1,handle_indices,i*ones(size(handles{i}.new_position(1,:),1),1));
         case 'Curved'
             positions = cat(1,positions,handles.all_handles{i}.new_mesh_position);
-            handle_indices = cat(1,handle_indices,i*ones(size(handles.all_handles{i}.new_mesh_position,1),1));
     end
 end
 if ~isempty(handles.cage_edge_list)
@@ -96,7 +91,8 @@ if ~isempty(handles.all_cages)
 end
 
 disp('biharmonic_moebius_sphere.m: Listing handle points')
-[equi2sphere(positions) handle_indices]
+equi2sphere(positions)
+
 disp(finally_cage_indices)
 V = [handles.V;equi2sphere(positions)];
 F = convhull(V);
