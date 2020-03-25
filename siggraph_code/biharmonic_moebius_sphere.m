@@ -91,11 +91,17 @@ if ~isempty(handles.all_cages)
 end
 
 disp('biharmonic_moebius_sphere.m: Listing handle points')
-equi2sphere(positions)
-
-disp(finally_cage_indices)
-V = [handles.V;equi2sphere(positions)];
+P_handles = equi2sphere(positions);
+[V,~] = adaptive_mesh(P_handles,5);
+V = [V;equi2sphere(positions)];
 F = convhull(V);
+
+% % disp(finally_cage_indices)
+% V = [handles.V;equi2sphere(positions)];
+% F = convhull(V);
+% figure
+% tsurf(F,V)
+% input('')
 %computing spherical boundary conditions and biharmonic weights
 [b,bc] = new_boundary_conditions(V,F,equi2sphere(positions),point_indices,...
     [],[],curved_bone_indices,finally_cage_indices,bone_indices_to_edge_list,cage_indices_to_edge_list,discretization);
