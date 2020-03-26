@@ -240,6 +240,18 @@ hold off
 set(handles.figure1, 'Position', get(0, 'Screensize'));
 
 % Update handles structure
+
+for i = 1:handles.num_of_handles
+    if isequal(handles.all_handles{i}.type,'Curved')
+       if length(handles.handles_plot{i}) == 5
+           set(handles.handles_plot{i}{5}, 'ButtonDownFcn', {@image_ButtonDownFcn,handles});
+           set(handles.handles_plot{i}{4}, 'ButtonDownFcn', {@image_ButtonDownFcn,handles});
+       else
+           set(handles.handles_plot{i}{4}, 'ButtonDownFcn', {@image_ButtonDownFcn,handles});
+       end
+        
+    end
+end
 setappdata(0,'Handles',handles);
 set(handles.img_handle, 'ButtonDownFcn', {@image_ButtonDownFcn,handles});
 guidata(hObject, handles);
@@ -649,6 +661,17 @@ for i = 1:handles.num_of_handles
 end
 set(handles.img_handle, 'ButtonDownFcn', {@image_ButtonDownFcn,handles});
 
+for i = 1:handles.num_of_handles
+    if isequal(handles.all_handles{i}.type,'Curved')
+       if length(handles.handles_plot{i}) == 5
+           set(handles.handles_plot{i}{5}, 'ButtonDownFcn', {@image_ButtonDownFcn,handles});
+           set(handles.handles_plot{i}{4}, 'ButtonDownFcn', {@image_ButtonDownFcn,handles});
+       else
+           set(handles.handles_plot{i}{4}, 'ButtonDownFcn', {@image_ButtonDownFcn,handles});
+       end
+        
+    end
+end
 setappdata(0,'Handles',handles);
 
 function transf = Calculate_Transformation(inputs,outputs)
