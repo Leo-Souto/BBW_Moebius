@@ -90,18 +90,16 @@ if ~isempty(handles.all_cages)
     end
 end
 
-disp('biharmonic_moebius_sphere.m: Listing handle points')
-P_handles = equi2sphere(positions);
+% disp('biharmonic_moebius_sphere.m: Listing handle points')
+P_handles = equi2sphere(positions)
 [V,~] = adaptive_mesh(P_handles,5);
 V = [V;equi2sphere(positions)];
 F = convhull(V);
 
-% % disp(finally_cage_indices)
+% disp(finally_cage_indices)
 % V = [handles.V;equi2sphere(positions)];
 % F = convhull(V);
-% figure
-% tsurf(F,V)
-% input('')
+% size(F)
 %computing spherical boundary conditions and biharmonic weights
 [b,bc] = new_boundary_conditions(V,F,equi2sphere(positions),point_indices,...
     [],[],curved_bone_indices,finally_cage_indices,bone_indices_to_edge_list,cage_indices_to_edge_list,discretization);
@@ -111,10 +109,22 @@ if ~isempty(is_conform)
 else
     W = biharmonic_bounded(V,F,b,bc,'POU',false);
 end
+
 soma = sum(W,2);
 for i=1:num_of_handles
    W(:,i) = W(:,i)./soma; 
 end
+% figure
+% cor = load('custom_color.mat');
+% trisurf(F,V(:,1),V(:,2),V(:,3),W(:,1),'FaceColor','interp')
+% colormap(cor.cor);
+% axis equal
+% figure
+% cor = load('custom_color.mat');
+% trisurf(F,V(:,1),V(:,2),V(:,3),W(:,3),'FaceColor','interp')
+% colormap(cor.cor);
+% axis equal
+% cameratoolbar
 % for i =1:num_of_handles
 % figure;
 % trisurf(F,V(:,1),V(:,2),V(:,3),W(:,i),'FaceColor','interp')

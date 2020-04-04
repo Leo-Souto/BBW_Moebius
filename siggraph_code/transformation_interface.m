@@ -999,8 +999,7 @@ function save_Callback(hObject, eventdata, handles)
 % handles    structure with handles and user data (see GUIDATA)
 handles = getappdata(0,'Handles');
 [filename, pathname] = uiputfile({'*.jpg'},'Save as');
-image_to_save = biharmonic_moebius_sphere(handles.originalimage,handles.equi_points,handles.W,handles.T_coefs,...
-    [handles.imagesize(1) handles.imagesize(2)]);
+image_to_save = biharmonic_moebius_sphere(handles.originalimage,handles,[handles.imagesize(1) handles.imagesize(2)]);
 imwrite(image_to_save,strcat(pathname,filename),'JPEG');
 
 % --- Executes on button press in rectify.
