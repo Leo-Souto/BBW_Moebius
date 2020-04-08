@@ -1020,7 +1020,7 @@ switch get(hObject,'Value')
         %%%weight for rectification
         w1 = 100;
         %%%weight for position
-        w2 = 1;
+        w2 = 3;
         %%%weight for coupled endpoints
         w3 = 10;
         block_A = [];
@@ -1119,101 +1119,173 @@ switch get(hObject,'Value')
                     bone_size = min([sqrt((P1_b(1) - P3_b(1))^2 + (P1_b(2) - P3_b(2))^2) ...
                                     sqrt((P1_b(1) - (P3_b(1)+2*pi))^2 + (P1_b(2) - P3_b(2))^2) ...
                                     sqrt((P1_b(1) - (P3_b(1)-2*pi))^2 + (P1_b(2) - P3_b(2))^2)]);
-                    for k = 1:2
-                        for l = 1:3
-                           Pk_ = handles.all_handles{i}.new_position(2*(k-1)+1,:);
-                           Pl_ = handles.all_handles{j}.new_position(l,:);
-                           min_dist = [sqrt((Pk_(1) - Pl_(1))^2 + (Pk_(2) - Pl_(2))^2) ...
-                                       sqrt((Pk_(1) - (Pl_(1)+2*pi))^2 + (Pk_(2) - Pl_(2))^2) ...
-                                       sqrt((Pk_(1) - (Pl_(1)-2*pi))^2 + (Pk_(2) - Pl_(2))^2)];
-                            minimo= min(min_dist);
-                            if minimo < bone_size/2
-                                ind_i = 0;
-                                ind_j = 0;
-                                
-                                w4 = 5*kumaraswamy(minimo,1,5,bone_size/2,0);
-                                for m = 1:length(solution_index)
-                                    if ~isempty(intersect(solution_index{m},[i 2*(k-1)+1],'rows'))
-                                        ind_i = m;
-                                        break
-                                    end
-                                end
-                                for m = 1:length(solution_index)
-                                    if ~isempty(intersect(solution_index{m},[j l],'rows'))
-                                        ind_j = m;
-                                        break
-                                    end
-                                end
-                                ind_i = 2*(ind_i-1)+1;
-                                ind_j = 2*(ind_j-1)+1;
-                                
-                                block_A(ind_i,ind_i) = block_A(ind_i,ind_i) + w4;
-                                block_A(ind_i+1,ind_i+1) = block_A(ind_i+1,ind_i+1) + w4;
-                                block_A(ind_i,ind_j) = block_A(ind_i,ind_j) - w4;
-                                block_A(ind_i+1,ind_j+1) = block_A(ind_i+1,ind_j+1) - w4;
-                                
-                                block_A(ind_j,ind_j) = block_A(ind_j,ind_j) + w4;
-                                block_A(ind_j+1,ind_j+1) = block_A(ind_j+1,ind_j+1) + w4;
-                                block_A(ind_j,ind_i) = block_A(ind_j,ind_i) - w4;
-                                block_A(ind_j+1,ind_i+1) = block_A(ind_j+1,ind_i+1) - w4;
-                                
-                                block_B(ind_i) = block_B(ind_i) + w4*(handles.all_handles{i}.new_position(2*(k-1)+1,1) - handles.all_handles{j}.new_position(l,1));
-                                block_B(ind_i+1) = block_B(ind_i+1) + w4*(handles.all_handles{i}.new_position(2*(k-1)+1,2) - handles.all_handles{j}.new_position(l,2));
-                                block_B(ind_j) = block_B(ind_j) - w4*(handles.all_handles{i}.new_position(2*(k-1)+1,1) - handles.all_handles{j}.new_position(l,1));
-                                block_B(ind_j+1) = block_B(ind_j+1) - w4*(handles.all_handles{i}.new_position(2*(k-1)+1,2) - handles.all_handles{j}.new_position(l,2));
-                                                               
-                            end
-                        end
+                for l = 1:length(solution_index)
+                    if ~isempty(intersect(solution_index{l},[i 1],'rows'))
+                            ind_i1 = l;
                     end
+                    if ~isempty(intersect(solution_index{l},[i 2],'rows'))
+                            ind_i2 = l;
+                    end
+                    if ~isempty(intersect(solution_index{l},[i 3],'rows'))
+                            ind_i3 = l;
+                    end
+                end
+                for l = 1:length(solution_index)
+                    if ~isempty(intersect(solution_index{l},[j 1],'rows'))
+                            ind_j1 = l;
+                    end
+                    if ~isempty(intersect(solution_index{l},[j 2],'rows'))
+                            ind_j2 = l;
+                    end
+                    if ~isempty(intersect(solution_index{l},[j 3],'rows'))
+                            ind_j3 = l;
+                    end
+                end
+                ind_i1 = 2*(ind_i1-1)+1;
+                ind_i2 = 2*(ind_i2-1)+1;
+                ind_i3 = 2*(ind_i3-1)+1;
+                ind_j1 = 2*(ind_j1-1)+1;
+                ind_j2 = 2*(ind_j2-1)+1;
+                ind_j3 = 2*(ind_j3-1)+1;
+                
+                [Pos_i,t_i] = compute_bone_discretization(handles.all_handles{i},handles.T_coefs(i,:));
+                [Pos_j,t_j] = compute_bone_discretization(handles.all_handles{j},handles.T_coefs(j,:));
+                [Pos_i_x,Pos_i_y] = meshgrid(Pos_i(:,1),Pos_i(:,2));
+
+                [Pos_j_x,Pos_j_y] = meshgrid(Pos_j(:,1),Pos_j(:,2));
+                dist_P_k = sqrt((Pos_i_x - Pos_j_x).^2 + (Pos_i_y - Pos_j_y).^2);
+                w4 = 0.0005*kumaraswamy(dist_P_k,1,5,bone_size/2,0);
+                w4
+                dpk_x = Pos_i_x - Pos_j_x; 
+                dpk_y = Pos_i_y - Pos_j_y;
+                [Ki_x,Ki_y] = meshgrid(t_i);
+                [Kj_x,Kj_y] = meshgrid(t_j);
+
+                % Pi1 line
+                block_A(ind_i1,ind_i1) = block_A(ind_i1,ind_i1) + sum(sum(w4.*(1-Ki_y).^2));
+                block_A(ind_i1+1,ind_i1+1) = block_A(ind_i1+1,ind_i1+1) + sum(sum(w4.*(1-Ki_y).^2));
+                block_A(ind_i1,ind_i3) = block_A(ind_i1,ind_i3) +sum(sum(w4.*Ki_y.*(1-Ki_y)));
+                block_A(ind_i1+1,ind_i3+1) = block_A(ind_i1+1,ind_i3+1) +sum(sum(w4.*Ki_y.*(1-Ki_y)));
+                block_A(ind_i1,ind_j1) = block_A(ind_i1,ind_j1) +sum(sum(-w4.*(1-Ki_y).*(1-Kj_x)));
+                block_A(ind_i1+1,ind_j1+1) = block_A(ind_i1+1,ind_j1+1) +sum(sum(-w4.*(1-Ki_y).*(1-Kj_x)));
+                block_A(ind_i1,ind_j3) = block_A(ind_i1,ind_j3) +sum(sum(-w4.*(1-Ki_y).*(Kj_x)));
+                block_A(ind_i1+1,ind_j3+1) = block_A(ind_i1+1,ind_j3+1) +sum(sum(-w4.*(1-Ki_y).*(Kj_x)));
+                % Pi3 line
+                block_A(ind_i3,ind_i1) = block_A(ind_i3,ind_i1) + sum(sum(w4.*(1-Ki_y).*Ki_y));
+                block_A(ind_i3+1,ind_i1+1) = block_A(ind_i3+1,ind_i1+1) + sum(sum(w4.*(1-Ki_y).*Ki_y));
+                block_A(ind_i3,ind_i3) = block_A(ind_i3,ind_i3) +sum(sum(w4.*Ki_y.^2));
+                block_A(ind_i3+1,ind_i3+1) = block_A(ind_i3+1,ind_i3+1) +sum(sum(w4.*Ki_y.^2));
+                block_A(ind_i3,ind_j1) = block_A(ind_i3,ind_j1) +sum(sum(-w4.*(Ki_y).*(1-Kj_x)));
+                block_A(ind_i3+1,ind_j1+1) = block_A(ind_i3+1,ind_j1+1) +sum(sum(-w4.*(Ki_y).*(1-Kj_x)));
+                block_A(ind_i3,ind_j3) = block_A(ind_i3,ind_j3) +sum(sum(-w4.*(Ki_y).*(Kj_x)));
+                block_A(ind_i3+1,ind_j3+1) = block_A(ind_i3+1,ind_j3+1) +sum(sum(-w4.*(Ki_y).*(Kj_x)));
+
+                % Pj1 line
+                block_A(ind_j1,ind_i1) = block_A(ind_j1,ind_i1) + sum(sum(-w4.*(1-Ki_y).*(1-Kj_x)));
+                block_A(ind_j1+1,ind_i1+1) = block_A(ind_j1+1,ind_i1+1) + sum(sum(-w4.*(1-Ki_y).*(1-Kj_x)));
+                block_A(ind_j1,ind_i3) = block_A(ind_j1,ind_i3) +sum(sum(-w4.*Ki_y.*(1-Kj_x)));
+                block_A(ind_j1+1,ind_i3+1) = block_A(ind_j1+1,ind_i3+1) +sum(sum(-w4.*Ki_y.*(1-Kj_x)));
+                block_A(ind_j1,ind_j1) = block_A(ind_j1,ind_j1) +sum(sum(w4.*(1-Kj_x).*(1-Kj_x)));
+                block_A(ind_j1+1,ind_j1+1) = block_A(ind_j1+1,ind_j1+1) +sum(sum(w4.*(1-Kj_x).*(1-Kj_x)));
+                block_A(ind_j1,ind_j3) = block_A(ind_j1,ind_j3) +sum(sum(w4.*(1-Kj_x).*(Kj_x)));
+                block_A(ind_j1+1,ind_j3+1) = block_A(ind_j1+1,ind_j3+1) +sum(sum(w4.*(1-Kj_x).*(Kj_x)));
+                
+                % Pj3 line
+                block_A(ind_j3,ind_i1) = block_A(ind_j3,ind_i1) + sum(sum(-w4.*(1-Ki_y).*(Kj_x)));
+                block_A(ind_j3+1,ind_i1+1) = block_A(ind_j1+1,ind_i1+1) + sum(sum(-w4.*(1-Ki_y).*(Kj_x)));
+                block_A(ind_j3,ind_i3) = block_A(ind_j3,ind_i3) +sum(sum(-w4.*Ki_y.*(Kj_x)));
+                block_A(ind_j3+1,ind_i3+1) = block_A(ind_j3+1,ind_i3+1) +sum(sum(-w4.*Ki_y.*(Kj_x)));
+                block_A(ind_j3,ind_j1) = block_A(ind_j3,ind_j1) +sum(sum(w4.*(1-Kj_x).*(Kj_x)));
+                block_A(ind_j3+1,ind_j1+1) = block_A(ind_j3+1,ind_j1+1) +sum(sum(w4.*(1-Kj_x).*(Kj_x)));
+                block_A(ind_j3,ind_j3) = block_A(ind_j3,ind_j3) + sum(sum(w4.*Kj_x.^2));
+                block_A(ind_j3+1,ind_j3+1) = block_A(ind_j3+1,ind_j3+1) +sum(sum(w4.*Kj_x.^2));
+                
+                                
+                block_B(ind_i1) = block_B(ind_i1) + sum(sum(w4.*dpk_x.*(1-Ki_y)));
+                block_B(ind_i1+1) = block_B(ind_i1+1) + sum(sum(w4.*dpk_y.*(1-Ki_y)));
+                block_B(ind_i3) = block_B(ind_i3) + sum(sum(w4.*dpk_x.*Ki_y));
+                block_B(ind_i3+1) = block_B(ind_i3+1) + sum(sum(w4.*dpk_y.*Ki_y));
+                block_B(ind_j1) = block_B(ind_j1) + sum(sum(-w4.*dpk_x.*(1-Kj_x)));
+                block_B(ind_j1+1) = block_B(ind_j1+1) + sum(sum(-w4.*dpk_y.*(1-Kj_x)));
+                block_B(ind_j3) = block_B(ind_j3) + sum(sum(-w4.*dpk_x.*Kj_x));
+                block_B(ind_j3+1) = block_B(ind_j3+1) +sum(sum(-w4.*dpk_y.*Kj_x));
                 elseif ( isequal(handles.all_handles{i}.type,'Point') || isequal(handles.all_handles{i}.type,'Closed_Cage')) && isequal(handles.all_handles{j}.type,'Curved') && i ~= j
                     %% relative position, point and cage handles
                     P1_b = handles.all_handles{j}.new_position(1,:);
                     P3_b = handles.all_handles{j}.new_position(3,:);
-                    bone_size = min([sqrt((P1_b(1) - P3_b(1))^2 + (P1_b(2) - P3_b(2))^2) ...
+                    Pi_ = handles.all_handles{i}.new_position(1,:);
+                    [bone_size,min_index] = min([sqrt((P1_b(1) - P3_b(1))^2 + (P1_b(2) - P3_b(2))^2) ...
                                     sqrt((P1_b(1) - (P3_b(1)+2*pi))^2 + (P1_b(2) - P3_b(2))^2) ...
                                     sqrt((P1_b(1) - (P3_b(1)-2*pi))^2 + (P1_b(2) - P3_b(2))^2)]);
-                    for k = 1:3
-                        Pk_ = handles.all_handles{i}.new_position(1,:);
-                        Pl_ = handles.all_handles{j}.new_position(k,:);
-                           min_dist = [sqrt((Pk_(1) - Pl_(1))^2 + (Pk_(2) - Pl_(2))^2) ...
-                                       sqrt((Pk_(1) - (Pl_(1)+2*pi))^2 + (Pk_(2) - Pl_(2))^2) ...
-                                       sqrt((Pk_(1) - (Pl_(1)-2*pi))^2 + (Pk_(2) - Pl_(2))^2)];
-                           minimo= min(min_dist);
-                        if minimo < bone_size/2
-                            ind_i = 0;
-                            ind_j = 0;
-
-                            w4 = 5*kumaraswamy(minimo,1,5,bone_size/2,0);
-                            for l = 1:length(solution_index)
-                                if ~isempty(intersect(solution_index{l},[i 1],'rows'))
-                                    ind_i = l;
-                                    break
-                                end
-                            end
-                            for l = 1:length(solution_index)
-                                if ~isempty(intersect(solution_index{l},[j k],'rows'))
-                                    ind_j = l;
-                                    break
-                                end
-                            end
-                            ind_i = 2*(ind_i-1)+1;
-                            ind_j = 2*(ind_j-1)+1;
-                            block_A(ind_i,ind_i) = block_A(ind_i,ind_i) + w4;
-                            block_A(ind_i+1,ind_i+1) = block_A(ind_i+1,ind_i+1) + w4;
-                            block_A(ind_i,ind_j) = block_A(ind_i,ind_j) - w4;
-                            block_A(ind_i+1,ind_j+1) = block_A(ind_i+1,ind_j+1) - w4;
-                            
-                            block_A(ind_j,ind_j) = block_A(ind_j,ind_j) + w4;
-                            block_A(ind_j+1,ind_j+1) = block_A(ind_j+1,ind_j+1) + w4;
-                            block_A(ind_j,ind_i) = block_A(ind_j,ind_i) - w4;
-                            block_A(ind_j+1,ind_i+1) = block_A(ind_j+1,ind_i+1) - w4;
-                            
-                            block_B(ind_i) = block_B(ind_i) + w4*(handles.all_handles{i}.new_position(1,1) - handles.all_handles{j}.new_position(k,1));
-                            block_B(ind_i+1) = block_B(ind_i+1) + w4*(handles.all_handles{i}.new_position(1,2) - handles.all_handles{j}.new_position(k,2));
-                            block_B(ind_j) = block_B(ind_j) - w4*(handles.all_handles{i}.new_position(1,1) - handles.all_handles{j}.new_position(k,1));
-                            block_B(ind_j+1) = block_B(ind_j+1) - w4*(handles.all_handles{i}.new_position(1,2) - handles.all_handles{j}.new_position(k,2));
+                    ind_i = 0;
+                    ind_j1 = 0;
+                    ind_j2 = 0;
+                    ind_j3 = 0;
+                    for l = 1:length(solution_index)
+                        if ~isempty(intersect(solution_index{l},[i 1],'rows'))
+                            ind_i = l;
+                            break
                         end
                     end
+                    for l = 1:length(solution_index)
+                        if ~isempty(intersect(solution_index{l},[j 1],'rows'))
+                            ind_j1 = l;
+                        end
+                        if ~isempty(intersect(solution_index{l},[j 2],'rows'))
+                            ind_j2 = l;
+                        end
+                        if ~isempty(intersect(solution_index{l},[j 3],'rows'))
+                            ind_j3 = l;
+                        end
+                    end
+                    ind_i = 2*(ind_i-1)+1;
+                    ind_j1 = 2*(ind_j1-1)+1;
+                    ind_j2 = 2*(ind_j2-1)+1;
+                    ind_j3 = 2*(ind_j3-1)+1;
+
+                    [Pos_k,t_k] = compute_bone_discretization(handles.all_handles{j},handles.T_coefs(j,:));
+                    
+					switch min_index
+                        case 1
+                            dist_P_k = sqrt((Pi_(1) - Pos_k(:,1)).^2 + (Pi_(2) - Pos_k(:,2)).^2);
+                        case 2
+                            dist_P_k = sqrt((Pi_(1) - Pos_k(:,1)).^2 + (Pi_(2) - Pos_k(:,2)).^2);
+                        case 3
+                            dist_P_k = sqrt((Pi_(1) - Pos_k(:,1)).^2 + (Pi_(2) - Pos_k(:,2)).^2);
+
+                    end
+                    w4 = 0.05*kumaraswamy(dist_P_k,1,5,bone_size/2,0);
+                    dpk_x = Pi_(1) - Pos_k(:,1); 
+                    dpk_y = Pi_(2) - Pos_k(:,2);
+                    %Pi line
+					block_A(ind_i,ind_i) = block_A(ind_i,ind_i) + sum(w4);
+                    block_A(ind_i+1,ind_i+1) = block_A(ind_i+1,ind_i+1) + sum(w4);
+                    block_A(ind_i,ind_j1) = block_A(ind_i,ind_j1) + sum(w4.*(t_k - 1));
+                    block_A(ind_i+1,ind_j1+1) = block_A(ind_i+1,ind_j1+1) + sum(w4.*(t_k - 1));
+                    block_A(ind_i,ind_j3) = block_A(ind_i,ind_j3) - sum(w4.*t_k);
+                    block_A(ind_i+1,ind_j3+1) = block_A(ind_i+1,ind_j3+1) - sum(w4.*t_k);
+                    %Pj1 line
+                    block_A(ind_j1,ind_i) = block_A(ind_j1,ind_i) + sum(w4.*(t_k - 1));
+                    block_A(ind_j1+1,ind_i+1) = block_A(ind_j1+1,ind_i+1) + sum(w4.*(t_k - 1));
+                    block_A(ind_j1,ind_j1) = block_A(ind_j1,ind_j1) + sum(w4.*(t_k - 1).^2);
+                    block_A(ind_j1+1,ind_j1+1) = block_A(ind_j1+1,ind_j1+1) + sum(w4.*(t_k - 1).^2);
+                    block_A(ind_j1,ind_j3) = block_A(ind_j1,ind_j3) + sum(w4.*t_k.*(1 - t_k));
+                    block_A(ind_j1+1,ind_j3+1) = block_A(ind_j1+1,ind_j3+1) + sum(w4.*t_k.*(1 - t_k));
+                    %Pj3 line
+                    block_A(ind_j3,ind_i) = block_A(ind_j3,ind_i) - sum(w4.*(t_k));
+                    block_A(ind_j3+1,ind_i+1) = block_A(ind_j3+1,ind_i+1) - sum(w4.*(t_k));
+                    block_A(ind_j3,ind_j1) = block_A(ind_j3,ind_j1) + sum(w4.*t_k.*(1 - t_k));
+                    block_A(ind_j3+1,ind_j1+1) = block_A(ind_j3+1,ind_j1+1) + sum(w4.*t_k.*(1 - t_k));
+                    block_A(ind_j3,ind_j3) = block_A(ind_j3,ind_j3) + sum(w4.*t_k.^2);
+                    block_A(ind_j3+1,ind_j3+1) = block_A(ind_j3+1,ind_j3+1) + sum(w4.*t_k.^2);
+
+                    block_B(ind_i) = block_B(ind_i) + sum(w4.*dpk_x);
+                    block_B(ind_i+1) = block_B(ind_i+1) + sum(w4.*dpk_y);
+                    block_B(ind_j1) = block_B(ind_j1) + sum(w4.*(t_k-1).*dpk_x);
+                    block_B(ind_j1+1) = block_B(ind_j1+1) + sum(w4.*(t_k-1).*dpk_y);
+                    block_B(ind_j3) = block_B(ind_j3) - sum(w4.*t_k.*dpk_x);
+                    block_B(ind_j3+1) = block_B(ind_j3+1) - sum(w4.*t_k.*dpk_y);
+
                 end
             end
         end
