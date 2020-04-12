@@ -1020,7 +1020,7 @@ switch get(hObject,'Value')
         %%%weight for rectification
         w1 = 100;
         %%%weight for position
-        w2 = 3;
+        w2 = 0.3;
         %%%weight for coupled endpoints
         w3 = 10;
         block_A = [];
@@ -1151,17 +1151,39 @@ switch get(hObject,'Value')
                 [Pos_i,t_i] = compute_bone_discretization(handles.all_handles{i},handles.T_coefs(i,:));
                 [Pos_j,t_j] = compute_bone_discretization(handles.all_handles{j},handles.T_coefs(j,:));
                 [Pos_i_x,Pos_i_y] = meshgrid(Pos_i(:,1),Pos_i(:,2));
-
                 [Pos_j_x,Pos_j_y] = meshgrid(Pos_j(:,1),Pos_j(:,2));
                 dist_P_k = sqrt((Pos_i_x - Pos_j_x).^2 + (Pos_i_y - Pos_j_y).^2);
-                w4 = 0.0005*kumaraswamy(dist_P_k,1,5,bone_size/2,0);
-                w4
-                dpk_x = Pos_i_x - Pos_j_x; 
+                for a=1:size(Pos_i,1)
+                    for b=1:size(Pos_j,1)
+                        dist_P_k(a,b) = sqrt((Pos_i(a,1)-Pos_j(b,1))^2+(Pos_i(a,2)-Pos_j(b,2))^2);
+                    end
+                end
+                disp('distPk nova')
+                dist_P_k
+                w4 = kumaraswamy(dist_P_k,1,5,bone_size/2,0);
+                % w4 = 100000;
+                % w4 = 100*(1-min(max(dist_P_k,0),1)).^10;
+                dpk_x = Pos_i_x - Pos_j_x;
                 dpk_y = Pos_i_y - Pos_j_y;
+                for a=1:size(Pos_i,1)
+                    for b=1:size(Pos_j,1)
+                        dpk_x(a,b) = Pos_i(a,1)-Pos_j(b,1);
+                        dpk_y(a,b) = Pos_i(a,2)-Pos_j(b,2);
+                    end
+                end
+%                 disp('dpkx novo')
+%                 dpk_x
+%                 disp('dpky novo')
+%                 dpk_y
+                
                 [Ki_x,Ki_y] = meshgrid(t_i);
                 [Kj_x,Kj_y] = meshgrid(t_j);
+                disp('Kiy')
+                Ki_y
+                disp('Kjx')
+                Kj_x
 
-                % Pi1 line
+                % Pi1 row
                 block_A(ind_i1,ind_i1) = block_A(ind_i1,ind_i1) + sum(sum(w4.*(1-Ki_y).^2));
                 block_A(ind_i1+1,ind_i1+1) = block_A(ind_i1+1,ind_i1+1) + sum(sum(w4.*(1-Ki_y).^2));
                 block_A(ind_i1,ind_i3) = block_A(ind_i1,ind_i3) +sum(sum(w4.*Ki_y.*(1-Ki_y)));
@@ -1170,7 +1192,7 @@ switch get(hObject,'Value')
                 block_A(ind_i1+1,ind_j1+1) = block_A(ind_i1+1,ind_j1+1) +sum(sum(-w4.*(1-Ki_y).*(1-Kj_x)));
                 block_A(ind_i1,ind_j3) = block_A(ind_i1,ind_j3) +sum(sum(-w4.*(1-Ki_y).*(Kj_x)));
                 block_A(ind_i1+1,ind_j3+1) = block_A(ind_i1+1,ind_j3+1) +sum(sum(-w4.*(1-Ki_y).*(Kj_x)));
-                % Pi3 line
+                % Pi3 row
                 block_A(ind_i3,ind_i1) = block_A(ind_i3,ind_i1) + sum(sum(w4.*(1-Ki_y).*Ki_y));
                 block_A(ind_i3+1,ind_i1+1) = block_A(ind_i3+1,ind_i1+1) + sum(sum(w4.*(1-Ki_y).*Ki_y));
                 block_A(ind_i3,ind_i3) = block_A(ind_i3,ind_i3) +sum(sum(w4.*Ki_y.^2));
@@ -1180,7 +1202,7 @@ switch get(hObject,'Value')
                 block_A(ind_i3,ind_j3) = block_A(ind_i3,ind_j3) +sum(sum(-w4.*(Ki_y).*(Kj_x)));
                 block_A(ind_i3+1,ind_j3+1) = block_A(ind_i3+1,ind_j3+1) +sum(sum(-w4.*(Ki_y).*(Kj_x)));
 
-                % Pj1 line
+                % Pj1 row
                 block_A(ind_j1,ind_i1) = block_A(ind_j1,ind_i1) + sum(sum(-w4.*(1-Ki_y).*(1-Kj_x)));
                 block_A(ind_j1+1,ind_i1+1) = block_A(ind_j1+1,ind_i1+1) + sum(sum(-w4.*(1-Ki_y).*(1-Kj_x)));
                 block_A(ind_j1,ind_i3) = block_A(ind_j1,ind_i3) +sum(sum(-w4.*Ki_y.*(1-Kj_x)));
@@ -1190,16 +1212,16 @@ switch get(hObject,'Value')
                 block_A(ind_j1,ind_j3) = block_A(ind_j1,ind_j3) +sum(sum(w4.*(1-Kj_x).*(Kj_x)));
                 block_A(ind_j1+1,ind_j3+1) = block_A(ind_j1+1,ind_j3+1) +sum(sum(w4.*(1-Kj_x).*(Kj_x)));
                 
-                % Pj3 line
+                % Pj3 row
                 block_A(ind_j3,ind_i1) = block_A(ind_j3,ind_i1) + sum(sum(-w4.*(1-Ki_y).*(Kj_x)));
-                block_A(ind_j3+1,ind_i1+1) = block_A(ind_j1+1,ind_i1+1) + sum(sum(-w4.*(1-Ki_y).*(Kj_x)));
+%                 block_A(ind_j3+1,ind_i1+1) = block_A(ind_j1+1,ind_i1+1) + sum(sum(-w4.*(1-Ki_y).*(Kj_x)));
+                block_A(ind_j3+1,ind_i1+1) = block_A(ind_j3+1,ind_i1+1) + sum(sum(-w4.*(1-Ki_y).*(Kj_x)));
                 block_A(ind_j3,ind_i3) = block_A(ind_j3,ind_i3) +sum(sum(-w4.*Ki_y.*(Kj_x)));
                 block_A(ind_j3+1,ind_i3+1) = block_A(ind_j3+1,ind_i3+1) +sum(sum(-w4.*Ki_y.*(Kj_x)));
                 block_A(ind_j3,ind_j1) = block_A(ind_j3,ind_j1) +sum(sum(w4.*(1-Kj_x).*(Kj_x)));
                 block_A(ind_j3+1,ind_j1+1) = block_A(ind_j3+1,ind_j1+1) +sum(sum(w4.*(1-Kj_x).*(Kj_x)));
                 block_A(ind_j3,ind_j3) = block_A(ind_j3,ind_j3) + sum(sum(w4.*Kj_x.^2));
                 block_A(ind_j3+1,ind_j3+1) = block_A(ind_j3+1,ind_j3+1) +sum(sum(w4.*Kj_x.^2));
-                
                                 
                 block_B(ind_i1) = block_B(ind_i1) + sum(sum(w4.*dpk_x.*(1-Ki_y)));
                 block_B(ind_i1+1) = block_B(ind_i1+1) + sum(sum(w4.*dpk_y.*(1-Ki_y)));

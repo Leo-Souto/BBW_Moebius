@@ -91,8 +91,8 @@ if ~isempty(handles.all_cages)
 end
 
 % disp('biharmonic_moebius_sphere.m: Listing handle points')
-P_handles = equi2sphere(positions)
-[V,~] = adaptive_mesh(P_handles,5);
+P_handles = equi2sphere(positions);
+[V,~] = adaptive_mesh(P_handles,4);
 V = [V;equi2sphere(positions)];
 F = convhull(V);
 
