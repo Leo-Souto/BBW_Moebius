@@ -1272,7 +1272,7 @@ switch get(hObject,'Value')
                             dist_P_k = sqrt((Pi_(1) - Pos_k(:,1)).^2 + (Pi_(2) - Pos_k(:,2)).^2);
 
                     end
-                    w4 = 0.05*kumaraswamy(dist_P_k,1,5,bone_size/2,0);
+                    w4 = kumaraswamy(dist_P_k,1,5,bone_size/2,0);
                     dpk_x = Pi_(1) - Pos_k(:,1); 
                     dpk_y = Pi_(2) - Pos_k(:,2);
                     %Pi line
