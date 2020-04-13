@@ -1158,8 +1158,8 @@ switch get(hObject,'Value')
                         dist_P_k(a,b) = sqrt((Pos_i(a,1)-Pos_j(b,1))^2+(Pos_i(a,2)-Pos_j(b,2))^2);
                     end
                 end
-                disp('distPk nova')
-                dist_P_k
+%                 disp('distPk nova')
+%                 dist_P_k
                 w4 = kumaraswamy(dist_P_k,1,5,bone_size/2,0);
                 % w4 = 100000;
                 % w4 = 100*(1-min(max(dist_P_k,0),1)).^10;
@@ -1178,10 +1178,6 @@ switch get(hObject,'Value')
                 
                 [Ki_x,Ki_y] = meshgrid(t_i);
                 [Kj_x,Kj_y] = meshgrid(t_j);
-                disp('Kiy')
-                Ki_y
-                disp('Kjx')
-                Kj_x
 
                 % Pi1 row
                 block_A(ind_i1,ind_i1) = block_A(ind_i1,ind_i1) + sum(sum(w4.*(1-Ki_y).^2));
