@@ -52,8 +52,6 @@ function biharmonic_interface_OpeningFcn(hObject, eventdata, handles, varargin)
 % handles    structure with handles and user data (see GUIDATA)
 % varargin   command line arguments to biharmonic_interface (see VARARGIN)
 
-% Choose default command line output for biharmonic_interface
-
 % open the image
 handles.output = hObject;
 handles.inputfilename = 'lamppost.jpg';
@@ -65,8 +63,7 @@ axis off
 % initiate the point
 handles.point = [0 0];
 handles.point2 = [0 0];
-%collect the handles of previous window
-%parece uma boa computar previamente a malha esférica
+
 TR = IcosahedronMesh;
 TR = SubdivideSphericalMesh(TR, 3);
 handles.V = TR.Points;
@@ -96,9 +93,6 @@ set(handles.image,'ButtonDownFcn',{@image_ButtonDownFcn,handles});
 % Update handles structure
 guidata(hObject, handles);
 
-% UIWAIT makes biharmonic_interface wait for user response (see UIRESUME)
-% uiwait(handles.figure1);
-
 
 % --- Outputs from this function are returned to the command line.
 function varargout = biharmonic_interface_OutputFcn(hObject, eventdata, handles)
@@ -124,7 +118,7 @@ hold off
 handles.num_of_handles = handles.num_of_handles + 1;
 handles.handles_plot{handles.num_of_handles} = h;
 equi_coord = pixel2equi(handles.point,handles.imagesize);
-%não gosto dessa parte aqui
+
 equi_coord(2,:) = [equi_coord(1,1)+0.3 equi_coord(1,2)];
 equi_coord(3,:) = [equi_coord(1,1)-0.3 equi_coord(1,2)];
 
@@ -213,7 +207,6 @@ if handles.cage_flag == 0
     handles.handles_plot{handles.num_of_handles} = h;
     equi_coord = pixel2equi(handles.point,handles.imagesize);
     equi_coord = [reshape(equi_coord,[1 2]); equi_coord(1)+0.3 equi_coord(2); equi_coord(1)-0.3 equi_coord(2)];
-%     e_coord = sphere2equi(handles.V(dsearchn(handles.V,equi2sphere(equi_coord)),:));
     if isequal(handles.button_value_handle,'closed_cage_handle')
         handles.all_handles{end+1} = bm_handle(handles.num_of_handles,equi_coord,equi_coord,'Closed_Cage',1);
     end
@@ -397,8 +390,6 @@ function uibuttongroup1_SelectionChangedFcn(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 
-%if button value handle == closed cage atualizar o fim da cage
-
 handles.button_value_handle = get(eventdata.NewValue, 'Tag');
 handles.closed_cage_handle = 0;
 handles.cage_flag = 0;
@@ -502,8 +493,6 @@ function next_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 positions = [];
-% h = warndlg('The next window may take a while to open due to weights optmization.','Warning');
-% uiwait(h);
 
 %% Here we put the handles in order [Points, then bones]
 num = handles.num_of_handles;
@@ -531,9 +520,7 @@ for i = 1:num
             handles.new_handle_order{end+1} = handles.all_handles{i};
     end
 end
-% not_finally_cage_indices = cell(1, length(handles.all_cages));
-% % disp(handles.all_cages)
-% finally_cage_indices = [];
+
 handles.new_cages = cell(1, length(handles.all_cages)); 
 if ~isempty(handles.all_cages)
     for i = 1:length(handles.all_cages)
@@ -578,7 +565,7 @@ for i = 1:handles.num_of_handles
    end
 end
 
-%% Here we take care of nearby endpoints
+%% Here we take care of close endpoints
 handles.coupled_endpoints = cell(handles.num_of_handles,1);
 handles.handles_visibility = ones(handles.num_of_handles,3);
 handles.bone_intersections = zeros(handles.num_of_handles,handles.num_of_handles);
@@ -594,9 +581,8 @@ for i  = 1:handles.num_of_handles
         handles.point_index_clusters = [handles.point_index_clusters; i 1; i 3];
     end
 end
-raio_approx = 2*pi/100;
+raio_approx = 2*pi/150;
 [clustersCentroids,clustersGeoMedians,clustersXY, handles.clustersInd] = clusterXYpoints(handles.point_coord_clusters,raio_approx,1,'centroid','merge');
-% clustersCentroidsMeshPos = sphere2equi(handles.V(dsearchn(handles.V,equi2sphere(clustersCentroids)),:));
 handles.num_of_clusters = numel(handles.clustersInd);
 for i = 1:handles.num_of_clusters
     for j = handles.clustersInd{i}
@@ -647,7 +633,7 @@ handles.new_handle_order = handles.new_handle_order(~cellfun('isempty',handles.n
 handles.num_of_handles = length(handles.new_handle_order);
 handles.all_handles = handles.new_handle_order;
 
-%% Here we take care of nearby endpoints
+%% Here we take care of close endpoints
 handles.coupled_endpoints = cell(handles.num_of_handles,1);
 handles.handles_visibility = ones(handles.num_of_handles,3);
 handles.bone_intersections = zeros(handles.num_of_handles,handles.num_of_handles);
@@ -663,7 +649,7 @@ for i  = 1:handles.num_of_handles
         handles.point_index_clusters = [handles.point_index_clusters; i 1; i 3];
     end
 end
-raio_approx = 2*pi/100;
+raio_approx = 2*pi/150;
 [clustersCentroids,clustersGeoMedians,clustersXY, handles.clustersInd] = clusterXYpoints(handles.point_coord_clusters,raio_approx,1,'centroid','merge');
 handles.num_of_clusters = numel(handles.clustersInd);
 for i = 1:handles.num_of_clusters
@@ -705,7 +691,6 @@ for i = 1:handles.num_of_clusters
     end
 end
 num_of_intersections = cell(handles.num_of_handles,1);
-%%[x_int y_int ind_linspace]
 
 %%in this desnecessary big code we break the bones
 for i =1:handles.num_of_handles
@@ -906,7 +891,7 @@ for i  = 1:handles.num_of_handles
         handles.point_index_clusters = [handles.point_index_clusters; i 1; i 3];
     end
 end
-raio_approx = 2*pi/100;
+raio_approx = 2*pi/150;
 [clustersCentroids,clustersGeoMedians,clustersXY, handles.clustersInd] = clusterXYpoints(handles.point_coord_clusters,raio_approx,1,'centroid','merge');
 
 handles.num_of_clusters = numel(handles.clustersInd);
@@ -975,7 +960,7 @@ for i  = 1:handles.num_of_handles
         handles.point_index_clusters = [handles.point_index_clusters; i 1; i 3];
     end
 end
-raio_approx = 2*pi/100;
+raio_approx = 2*pi/150;
 [clustersCentroids,clustersGeoMedians,clustersXY, handles.clustersInd] = clusterXYpoints(handles.point_coord_clusters,raio_approx,1,'centroid','merge');
 
 handles.num_of_clusters = numel(handles.clustersInd);
@@ -1019,29 +1004,6 @@ for i = 1:handles.num_of_clusters
     end
 end
 
-% point_indices = [];
-% curved_bone_indices = [];
-% positions = [];
-% 
-% 
-% for i = 1:handles.num_of_handles
-%     positions = cat(1,positions,handles.new_handle_order{i}.mesh_position);
-% end
-% for i = 1:handles.num_of_handles
-%     switch handles.new_handle_order{i}.type
-%         case 'Curved'
-%             indice1 = dsearchn(positions,handles.new_handle_order{i}.mesh_position(1,:));
-%             indice2 = dsearchn(positions,handles.new_handle_order{i}.mesh_position(3,:));
-%             curved_bone_indices = cat(1,curved_bone_indices,[indice1 indice2]);
-%         case 'Point'
-%             indice = dsearchn(positions,handles.new_handle_order{i}.mesh_position(1,:));
-%             point_indices = cat(1,point_indices,indice);
-%         case 'Closed_Cage'
-%             indice = dsearchn(positions,handles.new_handle_order{i}.mesh_position(1,:));
-%             point_indices = cat(1,point_indices,indice);
-%     end
-% end
-
 %% Here we take care of conform regions
 is_conform = zeros(size(handles.V,1),1);
 if ~isempty(handles.region_positions)
@@ -1080,40 +1042,7 @@ if ~isempty(handles.region_positions)
 end
 
 
-% tic
-% 
-% [b,bc] = bm_boundary_conditions(handles.V,handles.F,equi2sphere(positions),point_indices,...
-%     [],[],curved_bone_indices,finally_cage_indices);
-% if ~isempty(is_conform)
-%     W = biharmonic_bounded(handles.V,handles.F,b,bc,'POU',false,...
-%         'ShapePreserving',is_conform);
-% else
-%     W = biharmonic_bounded(handles.V,handles.F,b,bc,'POU',false);
-% end
-% W = W(handles.indices,:);
-% nx = handles.mesh_quality + 52;
-% x = linspace(-pi+1e-6,pi-1e-6,nx);
-% y = linspace(pi/2-1e-6,-pi/2+1e-6,nx/2);
-% [X,Y]=meshgrid(x,y);
-% 
-% handles.non_expanded = []; %from irregular to regular mesh
-% for i  = 1:handles.num_of_handles
-%     handles.non_expanded(:,:,i) = griddata(handles.equirec_points(:,1),handles.equirec_points(:,2),W(:,i),X,Y);
-% end
-% nx = handles.imagesize(2);
-% ny = handles.imagesize(1);
-% x = linspace(-pi+1e-6,pi-1e-6,nx);
-% y = linspace(pi/2-1e-6,-pi/2+1e-6,ny);
-% [U,V]=meshgrid(x,y);
-% handles.W_expanded = []; %expand to image size
-% for i  = 1:handles.num_of_handles
-%     handles.W_expanded(:,:,i) = qinterp2(X,Y,handles.non_expanded(:,:,i),U,V);
-% end
-% 
-% time_string = toc;
-% msg = strcat('Total computation time: ', num2str(time_string),' seconds');
-% h = msgbox(msg,'Total time');
-% uiwait(h);
+
 handles.all_handles = handles.new_handle_order;
 
 
@@ -1182,12 +1111,6 @@ Pos_next(1) = round(window_values(3)/2) + 240;
 Pos_next(2) = round(window_values(4) - 60);
 set(handles.next,'Position',Pos_next);
 
-%delete region button
-pos_region = get(handles.delete_region,'Position');
-pos_region(1) = round(window_values(3)/2) + 200;
-pos_region(2) = round(window_values(4) - 120);
-set(handles.delete_region,'Position',pos_region);
-
 %load
 Pos_load = get(handles.load,'Position');
 Pos_load(1) = round(window_values(3)/2 +20);
@@ -1195,24 +1118,8 @@ Pos_load(2) = round(window_values(4) - 60);
 set(handles.load,'Position',Pos_load);
 
 
-
-% --- Executes on button press in delete_region.
-function delete_region_Callback(hObject, eventdata, handles)
-% hObject    handle to delete_region (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-if ~isempty(handles.all_regions)
-    delete(handles.all_regions{end})
-    handles.all_regions(end) = [];
-    handles.region_positions = handles.region_positions(1:end-1,:);
-end
-guidata(hObject,handles);
-
-
 % --- Executes on button press in conformal_region.
 function conformal_region_Callback(hObject, eventdata, handles)
 % hObject    handle to conformal_region (see GCBO)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-
-% Hint: get(hObject,'Value') returns toggle state of conformal_region

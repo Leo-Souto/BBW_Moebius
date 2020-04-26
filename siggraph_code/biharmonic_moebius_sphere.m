@@ -1,9 +1,5 @@
 function [new_image] = biharmonic_moebius_sphere(Image,handles, size_final)
-%HELP Written here
-%% The mesh construction takes place before the image editing
-% We assume an already subdivided icosahedral mesh as input
-% Lets assume only point handles at this time, we must pass all the handles
-% data to the function
+
 num_of_handles = length(handles.T_coefs(:,1));
 positions = [];
 is_conform = [];
@@ -90,45 +86,30 @@ if ~isempty(handles.all_cages)
     end
 end
 
-% disp('biharmonic_moebius_sphere.m: Listing handle points')
+tic
 P_handles = equi2sphere(positions);
 [V,~] = adaptive_mesh(P_handles,4);
 V = [V;equi2sphere(positions)];
 F = convhull(V);
+disp('adaptive mesh time')
+toc
 
-% disp(finally_cage_indices)
-% V = [handles.V;equi2sphere(positions)];
-% F = convhull(V);
-% size(F)
-%computing spherical boundary conditions and biharmonic weights
 [b,bc] = new_boundary_conditions(V,F,equi2sphere(positions),point_indices,...
     [],[],curved_bone_indices,finally_cage_indices,bone_indices_to_edge_list,cage_indices_to_edge_list,discretization);
+tic
 if ~isempty(is_conform)
     W = biharmonic_bounded(V,F,b,bc,'POU',false,...
         'ShapePreserving',is_conform);
 else
     W = biharmonic_bounded(V,F,b,bc,'POU',false);
 end
+disp('biharmonic time')
+toc
 
 soma = sum(W,2);
 for i=1:num_of_handles
    W(:,i) = W(:,i)./soma; 
 end
-% figure
-% cor = load('custom_color.mat');
-% trisurf(F,V(:,1),V(:,2),V(:,3),W(:,1),'FaceColor','interp')
-% colormap(cor.cor);
-% axis equal
-% figure
-% cor = load('custom_color.mat');
-% trisurf(F,V(:,1),V(:,2),V(:,3),W(:,3),'FaceColor','interp')
-% colormap(cor.cor);
-% axis equal
-% cameratoolbar
-% for i =1:num_of_handles
-% figure;
-% trisurf(F,V(:,1),V(:,2),V(:,3),W(:,i),'FaceColor','interp')
-% end
 
 %% irregular mesh to grid weight interpolation
 
@@ -141,15 +122,14 @@ y = linspace(pi/2-1e-6,-pi/2+1e-6,nx/2);
 [X,Y]=meshgrid(x,y);
 %%%%%%%%tem que trocar griddata por scattered interpolant pra ganhar
 %%%%%%%%performance
+tic
 Interpolant = scatteredInterpolant(SV,W(:,1));
 non_expanded = zeros(nx/2,nx,num_of_handles); %from irregular to regular mesh
 for i  = 1:num_of_handles
     Interpolant.Values = W(:,i);
     non_expanded(:,:,i) = Interpolant(X,Y);
 end
-% h = figure;
-% figure(h)
-% trisurf(F,V(:,1),V(:,2),V(:,3),W(:,1))
+
 %from small regular, to final size weights
 nx = size_final(2);
 ny = size_final(1);
@@ -160,7 +140,8 @@ W_expanded = zeros(ny,nx,num_of_handles); %expand to image size
 for i  = 1:num_of_handles
     W_expanded(:,:,i) = qinterp2(X,Y,non_expanded(:,:,i),U,V);
 end
-%%%%%finished weights computation%%%%%
+disp('weight interpolation')
+toc
 
 %% Image editing
 %desconcatena a imagem
@@ -232,9 +213,7 @@ for i = 1:num_of_handles
     Delta_X = Current_Weight.*x_sphere2;
     Delta_Y = Current_Weight.*y_sphere2;
     Delta_Z = Current_Weight.*z_sphere2;
-%     if i == 2 
-%         disp([Delta_X])
-%     end
+
     X_total = X_total + Delta_X;
     Y_total = Y_total + Delta_Y;
     Z_total = Z_total + Delta_Z;
@@ -249,6 +228,8 @@ R = R';
 G = G';
 B = B';
 
+tic
+
 R_interp = griddedInterpolant(AA,CC,R);
 G_interp = griddedInterpolant(AA,CC,G);
 B_interp = griddedInterpolant(AA,CC,B);
@@ -259,5 +240,7 @@ b = B_interp(U_final,V_final)';
 
 %final image (concatenating matrix layers)
 new_image = (uint8(cat(3,r,g,b)));
+disp('image generation time')
+toc
 
 end

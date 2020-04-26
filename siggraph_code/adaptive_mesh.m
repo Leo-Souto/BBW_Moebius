@@ -10,8 +10,6 @@ function [V,F] = adaptive_mesh(P_handles,max_iter)
 %   V: #V x 3 matrix of 3d vertices
 %   F: #F x 3 matrix of indices into V
 
-tic
-
 % initial mesh
 TR = IcosahedronMesh;
 TR = SubdivideSphericalMesh(TR, 1);
@@ -38,7 +36,11 @@ for iter=1:max_iter
     end
 
     % append new points to proveious point list and remove duplicates
-    final_points = [TR.Points; TR_sub.Points];
+    if (~isempty(NewConnectivityList))
+        final_points = [TR.Points; TR_sub.Points];
+    else
+        final_points = [TR.Points];
+    end
     [final_points,~,~] = remove_duplicate_vertices(final_points,1e-7);
     
     % calculate the convex hull of the final points
@@ -53,5 +55,3 @@ end
 % return values
 F = TR_conv;
 V = final_points;
-
-toc

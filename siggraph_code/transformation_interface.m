@@ -61,7 +61,6 @@ handles.originalimage = imread(handles.inputfilename);
 handles.imagesize = size(handles.matlabImage);
 handles.V_equi = morehandles.V_equi;
 handles.num_of_handles = morehandles.num_of_handles;
-% handles.W = morehandles.W_expanded;
 handles.all_handles = morehandles.all_handles;
 handles.all_cages = morehandles.all_cages;
 handles.bone_intersections = morehandles.bone_intersections;
@@ -70,14 +69,12 @@ handles.coupled_endpoints = morehandles.coupled_endpoints;
 handles.handles_visibility = morehandles.handles_visibility;
 handles.point_coord_clusters = morehandles.point_coord_clusters;
 handles.point_index_clusters = morehandles.point_index_clusters;
-% handles.intersections_index = morehandles.intersections_index;
 handles.clustersInd = morehandles.clustersInd;
 handles.num_of_clusters = morehandles.num_of_clusters;
 handles.V = morehandles.V;
 handles.V_equi = morehandles.V_equi;
 handles.F = morehandles.F;
 handles.F_equi = morehandles.F_equi;
-% handles.intersections_index = morehandles.intersections_index;
 handles.handles_plot = {};
 handles.current_handle = [];
 handles.T_coefs = [];
@@ -102,8 +99,6 @@ for i = 1:length(handles.all_cages)
     for j = 1:length(handles.all_cages{i})-1
         index1 = handles.all_cages{i}(j);
         index2 = handles.all_cages{i}(j+1);
-%         interp_1 = griddedInterpolant(X,Y,(flipud(handles.W(:,:,index1)))');
-%         interp_2 = griddedInterpolant(X,Y,(flipud(handles.W(:,:,index2)))');
         sphere_coord = equi2sphere(handles.all_handles{index1}.position(1,:));
         sphere_coord2 = equi2sphere(handles.all_handles{index2}.position(1,:));
         t = linspace(0,1,100);
@@ -195,7 +190,7 @@ for i= 1:handles.num_of_handles
         h = plot(pix_pos(1,1),pix_pos(1,2),'o','MarkerFaceColor',[0.79 0 0.125],'MarkerEdgeColor',[0.25 0.25 0.25],'MarkerSize',5,'Parent',handles.image);
         handles.handles_plot{end+1} = {h,f,g};
     elseif isequal(handles.all_handles{i}.type,'Closed_Cage')
-        f = plot(pix_pos(1,1),pix_pos(1,2),'o','MarkerFaceColor',[0.79 0 0.125],'MarkerEdgeColor',[0.25 0.25 0.25],'MarkerSize',5,'Parent',handles.image);
+        f = plot(pix_pos(1,1),pix_pos(1,2),'o','MarkerFaceColor',[1 1 1],'MarkerEdgeColor',[0.25 0.25 0.25],'MarkerSize',5,'Parent',handles.image);
         handles.handles_plot{end+1} = f;
     end
     handles.T_coefs(i,:) = [1 0 0 1];
@@ -243,12 +238,12 @@ set(handles.figure1, 'Position', get(0, 'Screensize'));
 
 for i = 1:handles.num_of_handles
     if isequal(handles.all_handles{i}.type,'Curved')
-       if length(handles.handles_plot{i}) == 5
-           set(handles.handles_plot{i}{5}, 'ButtonDownFcn', {@image_ButtonDownFcn,handles});
-           set(handles.handles_plot{i}{4}, 'ButtonDownFcn', {@image_ButtonDownFcn,handles});
-       else
-           set(handles.handles_plot{i}{4}, 'ButtonDownFcn', {@image_ButtonDownFcn,handles});
-       end
+        if length(handles.handles_plot{i}) == 5
+            set(handles.handles_plot{i}{5}, 'ButtonDownFcn', {@image_ButtonDownFcn,handles});
+            set(handles.handles_plot{i}{4}, 'ButtonDownFcn', {@image_ButtonDownFcn,handles});
+        else
+            set(handles.handles_plot{i}{4}, 'ButtonDownFcn', {@image_ButtonDownFcn,handles});
+        end
         
     end
 end
@@ -426,35 +421,27 @@ hold on
 handles.handles_plot = {};
 handles.cages_plot = {};
 for k = 1:length(handles.cage_edge_list)
-%     for j = 1:length(handles.all_cages{k})-1
-%         index1 = handles.all_cages{k}(j);
-%         index2 = handles.all_cages{k}(j+1);
-%         Weight = handles.cage_weights{k}{j};
-%         transf = [handles.T_coefs(index1,:);handles.T_coefs(index2,:)];
-%         position = handles.cage_plot_pos{k}{j};
-%         equi_coord_par = apply_transf_plot(position,'Closed_Cage',transf,Weight);
-        equi_coord_par = handles.cage_edge_list{k}.new_position;
-        deriv = diff(equi_coord_par(:,1));
-        index = find(abs(deriv) > 0.1);
-        index = sort(index);
-        equi_coord_par_pix = equi2pixels(equi_coord_par,handles.imagesize);
-        if ~isempty(index)
-            inicio = index(1);
-            fim = index(length(index))+1;
-            X1 = equi_coord_par_pix(1:inicio,1);
-            Y1 = equi_coord_par_pix(1:inicio,2);
-            X2 = equi_coord_par_pix(fim:100,1);
-            Y2 = equi_coord_par_pix(fim:100,2);
-            f = plot(X1,Y1,'Color',[1 1 1],'Parent', handles.image);
-            f2 = plot(X2,Y2,'Color',[1 1 1],'Parent', handles.image);
-            handles.cages_plot{end+1} = f;
-            handles.cages_plot{end+1} = f2;
-        else
-            f = plot(equi_coord_par_pix(:,1), equi_coord_par_pix(:,2),'Color',[1 1 1],'Parent', handles.image);
-            handles.cages_plot{end+1} = f;
-        end
- end
-% end
+    equi_coord_par = handles.cage_edge_list{k}.new_position;
+    deriv = diff(equi_coord_par(:,1));
+    index = find(abs(deriv) > 0.1);
+    index = sort(index);
+    equi_coord_par_pix = equi2pixels(equi_coord_par,handles.imagesize);
+    if ~isempty(index)
+        inicio = index(1);
+        fim = index(length(index))+1;
+        X1 = equi_coord_par_pix(1:inicio,1);
+        Y1 = equi_coord_par_pix(1:inicio,2);
+        X2 = equi_coord_par_pix(fim:100,1);
+        Y2 = equi_coord_par_pix(fim:100,2);
+        f = plot(X1,Y1,'Color',[1 1 1],'Parent', handles.image);
+        f2 = plot(X2,Y2,'Color',[1 1 1],'Parent', handles.image);
+        handles.cages_plot{end+1} = f;
+        handles.cages_plot{end+1} = f2;
+    else
+        f = plot(equi_coord_par_pix(:,1), equi_coord_par_pix(:,2),'Color',[1 1 1],'Parent', handles.image);
+        handles.cages_plot{end+1} = f;
+    end
+end
 for j= 1:handles.num_of_handles
     pix_pos = equi2pixels(handles.all_handles{j}.new_position,handles.imagesize);
     if isequal(handles.all_handles{j}.type,'Curved')
@@ -510,7 +497,7 @@ for j= 1:handles.num_of_handles
         set(handles.handles_plot{j}{2},'ButtonDownFcn',{@selectpoint,handles})
         set(handles.handles_plot{j}{3},'ButtonDownFcn',{@selectpoint,handles})
     elseif isequal(handles.all_handles{j}.type,'Closed_Cage')
-        f = plot(pix_pos(1,1),pix_pos(1,2),'o','MarkerFaceColor',[0.79 0 0.125],'MarkerEdgeColor',[0.25 0.25 0.25],'MarkerSize',5,'Parent',handles.image);
+        f = plot(pix_pos(1,1),pix_pos(1,2),'o','MarkerFaceColor',[1 1 1],'MarkerEdgeColor',[0.25 0.25 0.25],'MarkerSize',5,'Parent',handles.image);
         handles.handles_plot{j} = f;
         set(handles.handles_plot{j},'UserData',[j 1]);
         set(handles.handles_plot{j},'ButtonDownFcn',{@selectpoint,handles})
@@ -596,7 +583,7 @@ for i = 1:handles.num_of_handles
         set(handles.handles_plot{i}{2},'MarkerFaceColor',[0.79 0 0.125],'MarkerEdgeColor',[0.25 0.25 0.25])
         set(handles.handles_plot{i}{3},'MarkerFaceColor',[0.79 0 0.125],'MarkerEdgeColor',[0.25 0.25 0.25])
     elseif isequal(handles.all_handles{i}.type,'Closed_Cage')
-        set(handles.handles_plot{i},'MarkerFaceColor',[0.79 0 0.125],'MarkerEdgeColor',[0.25 0.25 0.25])
+        set(handles.handles_plot{i},'MarkerFaceColor',[1 1 1],'MarkerEdgeColor',[0.25 0.25 0.25])
     end
 end
 
@@ -663,19 +650,19 @@ set(handles.img_handle, 'ButtonDownFcn', {@image_ButtonDownFcn,handles});
 
 for i = 1:handles.num_of_handles
     if isequal(handles.all_handles{i}.type,'Curved')
-       if length(handles.handles_plot{i}) == 5
-           set(handles.handles_plot{i}{5}, 'ButtonDownFcn', {@image_ButtonDownFcn,handles});
-           set(handles.handles_plot{i}{4}, 'ButtonDownFcn', {@image_ButtonDownFcn,handles});
-       else
-           set(handles.handles_plot{i}{4}, 'ButtonDownFcn', {@image_ButtonDownFcn,handles});
-       end
+        if length(handles.handles_plot{i}) == 5
+            set(handles.handles_plot{i}{5}, 'ButtonDownFcn', {@image_ButtonDownFcn,handles});
+            set(handles.handles_plot{i}{4}, 'ButtonDownFcn', {@image_ButtonDownFcn,handles});
+        else
+            set(handles.handles_plot{i}{4}, 'ButtonDownFcn', {@image_ButtonDownFcn,handles});
+        end
         
     end
 end
 setappdata(0,'Handles',handles);
 
 function transf = Calculate_Transformation(inputs,outputs)
-%Transform the input points in sphere points
+%Convert the input points into sphere points
 input_coord = cat(2, inputs, outputs);
 sphere_coord = zeros(3,6);
 n = 1;
@@ -700,7 +687,7 @@ while n <= N
     stereo_coord(n,4) = 2*sphere_coord(n,6)/(sphere_coord(n,4) +1);
     n = n + 1;
 end
-%transform the stereographic input points onto complex numbers
+%transform the stereographic input points into complex numbers
 complex_coord = zeros(3, 2);
 n = 1;
 while n <= N
@@ -708,7 +695,7 @@ while n <= N
     complex_coord(n,2) = stereo_coord(n,3) + stereo_coord(n,4)*1i;
     n = n + 1;
 end
-%Calculates the parameters of moebius transformation using a external
+%Calculate the parameters of Moebius transformation using a
 %function called crossmoebius
 [a ,b, c, d] = crossmoebius(complex_coord(1,1), complex_coord(2,1), complex_coord(3,1),...
     complex_coord(1,2), complex_coord(2,2), complex_coord(3,2));
@@ -863,49 +850,49 @@ if ~isempty(handles.current_handle)
         P3 = handles.all_handles{i}.position(3,:);
         handles.all_handles{i}.new_position = [P1_n;P2_n;P3_n];
         handles.T_coefs(i,:) = Calculate_Transformation([P1;P2;P3],[P1_n;P2_n;P3_n]);
-            index = find(handles.handle_to_edge_list(:,1) == i);
-    for j=1:length(index)
-        id1 = handles.cage_edge_list{handles.handle_to_edge_list(index(j),2)}.index(1);
-        id2 = handles.cage_edge_list{handles.handle_to_edge_list(index(j),2)}.index(2);
-        transf = [handles.T_coefs(id1,:);handles.T_coefs(id2,:)];
-        t = linspace(0,1,100);
-        Weight = [(1-t)' t'];
-        handles.cage_edge_list{handles.handle_to_edge_list(index(j),2)}.new_position = apply_transf_plot(handles.cage_edge_list{handles.handle_to_edge_list(index(j),2)}.position,'Closed_Cage',transf,Weight);
-    end
+        index = find(handles.handle_to_edge_list(:,1) == i);
+        for j=1:length(index)
+            id1 = handles.cage_edge_list{handles.handle_to_edge_list(index(j),2)}.index(1);
+            id2 = handles.cage_edge_list{handles.handle_to_edge_list(index(j),2)}.index(2);
+            transf = [handles.T_coefs(id1,:);handles.T_coefs(id2,:)];
+            t = linspace(0,1,100);
+            Weight = [(1-t)' t'];
+            handles.cage_edge_list{handles.handle_to_edge_list(index(j),2)}.new_position = apply_transf_plot(handles.cage_edge_list{handles.handle_to_edge_list(index(j),2)}.position,'Closed_Cage',transf,Weight);
+        end
     end
     
     axes(handles.image)
     cla
     
-handles.matlabImage = biharmonic_moebius_sphere(handles.originalimage,handles,[handles.imagesize(1) handles.imagesize(2)]);
-
+    handles.matlabImage = biharmonic_moebius_sphere(handles.originalimage,handles,[handles.imagesize(1) handles.imagesize(2)]);
+    
     
     handles.img_handle = image(handles.matlabImage);
     hold on
     handles.handles_plot = {};
     handles.cages_plot = {};
-for k = 1:length(handles.cage_edge_list)
+    for k = 1:length(handles.cage_edge_list)
         equi_coord_par = handles.cage_edge_list{k}.new_position;
-            deriv = diff(equi_coord_par(:,1));
-            index = find(abs(deriv) > 0.1);
-            index = sort(index);
-            equi_coord_par_pix = equi2pixels(equi_coord_par,handles.imagesize);
-            if ~isempty(index)
-                inicio = index(1);
-                fim = index(length(index))+1;
-                X1 = equi_coord_par_pix(1:inicio,1);
-                Y1 = equi_coord_par_pix(1:inicio,2);
-                X2 = equi_coord_par_pix(fim:100,1);
-                Y2 = equi_coord_par_pix(fim:100,2);
-                f = plot(X1,Y1,'Color',[1 1 1],'Parent', handles.image);
-                f2 = plot(X2,Y2,'Color',[1 1 1],'Parent', handles.image);
-                handles.cages_plot{end+1} = f;
-                handles.cages_plot{end+1} = f2;
-            else
-                f = plot(equi_coord_par_pix(:,1), equi_coord_par_pix(:,2),'Color',[1 1 1],'Parent', handles.image);
-                handles.cages_plot{end+1} = f;
-            end
-end
+        deriv = diff(equi_coord_par(:,1));
+        index = find(abs(deriv) > 0.1);
+        index = sort(index);
+        equi_coord_par_pix = equi2pixels(equi_coord_par,handles.imagesize);
+        if ~isempty(index)
+            inicio = index(1);
+            fim = index(length(index))+1;
+            X1 = equi_coord_par_pix(1:inicio,1);
+            Y1 = equi_coord_par_pix(1:inicio,2);
+            X2 = equi_coord_par_pix(fim:100,1);
+            Y2 = equi_coord_par_pix(fim:100,2);
+            f = plot(X1,Y1,'Color',[1 1 1],'Parent', handles.image);
+            f2 = plot(X2,Y2,'Color',[1 1 1],'Parent', handles.image);
+            handles.cages_plot{end+1} = f;
+            handles.cages_plot{end+1} = f2;
+        else
+            f = plot(equi_coord_par_pix(:,1), equi_coord_par_pix(:,2),'Color',[1 1 1],'Parent', handles.image);
+            handles.cages_plot{end+1} = f;
+        end
+    end
     for j= 1:handles.num_of_handles
         pix_pos = equi2pixels(handles.all_handles{j}.new_position,handles.imagesize);
         if isequal(handles.all_handles{j}.type,'Curved')
@@ -1008,7 +995,6 @@ function rectify_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
 handles = getappdata(0,'Handles');
-% Hint: get(hObject,'Value') returns toggle state of rectify
 switch get(hObject,'Value')
     case 0
         for i = 1:handles.num_of_handles
@@ -1022,7 +1008,7 @@ switch get(hObject,'Value')
         %%%weight for position
         w2 = 0.3;
         %%%weight for coupled endpoints
-        w3 = 10;
+        w3 = 1000;
         block_A = [];
         block_B = [];
         solution_index = {};
@@ -1034,16 +1020,16 @@ switch get(hObject,'Value')
                 P1_ = handles.all_handles{i}.new_position(1,:);
                 P3_ = handles.all_handles{i}.new_position(3,:);
                 t1_ = handles.all_handles{i}.proportion;
-                dist = [sqrt((P1_(1)-P3_(1))^2) sqrt((P1_(1)-(P3_(1)+2*pi))^2) sqrt((P1_(1)-(P3_(1)-2*pi))^2)]; 
+                dist = [sqrt((P1_(1)-P3_(1))^2) sqrt((P1_(1)-(P3_(1)+2*pi))^2) sqrt((P1_(1)-(P3_(1)-2*pi))^2)];
                 [minimo,index] = min(dist);
                 
                 switch index
                     case 1
-                    B = [w2*P1_(1); w2*P1_(2); 0; 0;w2*P3_(1); w2*P3_(2)];
+                        B = [w2*P1_(1); w2*P1_(2); 0; 0;w2*P3_(1); w2*P3_(2)];
                     case 2
-                    B = [w2*P1_(1)-w1*2*pi*t1_*(1-t1_); w2*P1_(2); +w1*2*pi*t1_; 0;w2*P3_(1) - w1*2*pi*t1_*t1_; w2*P3_(2)];
+                        B = [w2*P1_(1)-w1*2*pi*t1_*(1-t1_); w2*P1_(2); +w1*2*pi*t1_; 0;w2*P3_(1) - w1*2*pi*t1_*t1_; w2*P3_(2)];
                     case 3
-                    B = [w2*P1_(1)+w1*2*pi*t1_*(1-t1_); w2*P1_(2); -w1*2*pi*t1_;  0   ;w2*P3_(1) + w1*2*pi*t1_*t1_; w2*P3_(2)];
+                        B = [w2*P1_(1)+w1*2*pi*t1_*(1-t1_); w2*P1_(2); -w1*2*pi*t1_;  0   ;w2*P3_(1) + w1*2*pi*t1_*t1_; w2*P3_(2)];
                 end
                 A = [w1*(1-t1_)^2+w2       0       w1*(t1_-1)   0      w1*t1_*(1-t1_)      0       ; ...
                     0       w1*(1-t1_)^2+w2    0     w1*(t1_-1)      0       w1*t1_*(1-t1_); ...
@@ -1110,6 +1096,7 @@ switch get(hObject,'Value')
                 end
             end
         end
+        tic
         for i = 1:handles.num_of_handles
             for j = 1:handles.num_of_handles
                 %% relative position of bones
@@ -1117,142 +1104,140 @@ switch get(hObject,'Value')
                     P1_b = handles.all_handles{j}.new_position(1,:);
                     P3_b = handles.all_handles{j}.new_position(3,:);
                     bone_size = min([sqrt((P1_b(1) - P3_b(1))^2 + (P1_b(2) - P3_b(2))^2) ...
-                                    sqrt((P1_b(1) - (P3_b(1)+2*pi))^2 + (P1_b(2) - P3_b(2))^2) ...
-                                    sqrt((P1_b(1) - (P3_b(1)-2*pi))^2 + (P1_b(2) - P3_b(2))^2)]);
-                for l = 1:length(solution_index)
-                    if ~isempty(intersect(solution_index{l},[i 1],'rows'))
+                        sqrt((P1_b(1) - (P3_b(1)+2*pi))^2 + (P1_b(2) - P3_b(2))^2) ...
+                        sqrt((P1_b(1) - (P3_b(1)-2*pi))^2 + (P1_b(2) - P3_b(2))^2)]);
+                    
+                    for l = 1:length(solution_index)
+                        % if ~isempty(intersect(solution_index{l},[i 1],'rows'))
+                        if norm([i 1]-solution_index{l})==0
                             ind_i1 = l;
-                    end
-                    if ~isempty(intersect(solution_index{l},[i 2],'rows'))
+                        end
+                        % if ~isempty(intersect(solution_index{l},[i 2],'rows'))
+                        if norm([i 2]-solution_index{l})==0
                             ind_i2 = l;
-                    end
-                    if ~isempty(intersect(solution_index{l},[i 3],'rows'))
+                        end
+                        % if ~isempty(intersect(solution_index{l},[i 3],'rows'))
+                        if norm([i 3]-solution_index{l})==0
                             ind_i3 = l;
+                        end
                     end
-                end
-                for l = 1:length(solution_index)
-                    if ~isempty(intersect(solution_index{l},[j 1],'rows'))
+                    for l = 1:length(solution_index)
+                        % if ~isempty(intersect(solution_index{l},[j 1],'rows'))
+                        if norm([j 1]-solution_index{l})==0
                             ind_j1 = l;
-                    end
-                    if ~isempty(intersect(solution_index{l},[j 2],'rows'))
+                        end
+                        % if ~isempty(intersect(solution_index{l},[j 2],'rows'))
+                        if norm([j 2]-solution_index{l})==0
                             ind_j2 = l;
-                    end
-                    if ~isempty(intersect(solution_index{l},[j 3],'rows'))
+                        end
+                        % if ~isempty(intersect(solution_index{l},[j 3],'rows'))
+                        if norm([j 3]-solution_index{l})==0
                             ind_j3 = l;
+                        end
                     end
-                end
-                ind_i1 = 2*(ind_i1-1)+1;
-                ind_i2 = 2*(ind_i2-1)+1;
-                ind_i3 = 2*(ind_i3-1)+1;
-                ind_j1 = 2*(ind_j1-1)+1;
-                ind_j2 = 2*(ind_j2-1)+1;
-                ind_j3 = 2*(ind_j3-1)+1;
-                
-                [Pos_i,t_i] = compute_bone_discretization(handles.all_handles{i},handles.T_coefs(i,:));
-                [Pos_j,t_j] = compute_bone_discretization(handles.all_handles{j},handles.T_coefs(j,:));
-                [Pos_i_x,Pos_i_y] = meshgrid(Pos_i(:,1),Pos_i(:,2));
-                [Pos_j_x,Pos_j_y] = meshgrid(Pos_j(:,1),Pos_j(:,2));
-                dist_P_k = sqrt((Pos_i_x - Pos_j_x).^2 + (Pos_i_y - Pos_j_y).^2);
-                for a=1:size(Pos_i,1)
-                    for b=1:size(Pos_j,1)
-                        dist_P_k(a,b) = sqrt((Pos_i(a,1)-Pos_j(b,1))^2+(Pos_i(a,2)-Pos_j(b,2))^2);
+                    
+                    ind_i1 = 2*(ind_i1-1)+1;
+                    ind_i2 = 2*(ind_i2-1)+1;
+                    ind_i3 = 2*(ind_i3-1)+1;
+                    ind_j1 = 2*(ind_j1-1)+1;
+                    ind_j2 = 2*(ind_j2-1)+1;
+                    ind_j3 = 2*(ind_j3-1)+1;
+                    
+                    [Pos_i,t_i] = compute_bone_discretization(handles.all_handles{i},handles.T_coefs(i,:));
+                    [Pos_j,t_j] = compute_bone_discretization(handles.all_handles{j},handles.T_coefs(j,:));
+                    
+                    Pos_i_rep = kron(Pos_i,ones(size(Pos_i,1),1));
+                    Pos_j_rep = repmat(Pos_j,size(Pos_j,1),1);
+                    dist_P_k = reshape(normrow(Pos_i_rep-Pos_j_rep),size(Pos_i,1),size(Pos_i,1))';
+                    
+                    w4 = 0.01*kumaraswamy(dist_P_k,1,5,bone_size/4,0);
+                    
+                    dpk_x = zeros(size(dist_P_k));
+                    dpk_y = zeros(size(dist_P_k));
+                    for a=1:size(Pos_i,1)
+                        for b=1:size(Pos_j,1)
+                            dpk_x(a,b) = Pos_i(a,1)-Pos_j(b,1);
+                            dpk_y(a,b) = Pos_i(a,2)-Pos_j(b,2);
+                        end
                     end
-                end
-%                 disp('distPk nova')
-%                 dist_P_k
-                w4 = kumaraswamy(dist_P_k,1,5,bone_size/2,0);
-                % w4 = 100000;
-                % w4 = 100*(1-min(max(dist_P_k,0),1)).^10;
-                dpk_x = Pos_i_x - Pos_j_x;
-                dpk_y = Pos_i_y - Pos_j_y;
-                for a=1:size(Pos_i,1)
-                    for b=1:size(Pos_j,1)
-                        dpk_x(a,b) = Pos_i(a,1)-Pos_j(b,1);
-                        dpk_y(a,b) = Pos_i(a,2)-Pos_j(b,2);
-                    end
-                end
-%                 disp('dpkx novo')
-%                 dpk_x
-%                 disp('dpky novo')
-%                 dpk_y
-                
-                [Ki_x,Ki_y] = meshgrid(t_i);
-                [Kj_x,Kj_y] = meshgrid(t_j);
-
-                % Pi1 row
-                block_A(ind_i1,ind_i1) = block_A(ind_i1,ind_i1) + sum(sum(w4.*(1-Ki_y).^2));
-                block_A(ind_i1+1,ind_i1+1) = block_A(ind_i1+1,ind_i1+1) + sum(sum(w4.*(1-Ki_y).^2));
-                block_A(ind_i1,ind_i3) = block_A(ind_i1,ind_i3) +sum(sum(w4.*Ki_y.*(1-Ki_y)));
-                block_A(ind_i1+1,ind_i3+1) = block_A(ind_i1+1,ind_i3+1) +sum(sum(w4.*Ki_y.*(1-Ki_y)));
-                block_A(ind_i1,ind_j1) = block_A(ind_i1,ind_j1) +sum(sum(-w4.*(1-Ki_y).*(1-Kj_x)));
-                block_A(ind_i1+1,ind_j1+1) = block_A(ind_i1+1,ind_j1+1) +sum(sum(-w4.*(1-Ki_y).*(1-Kj_x)));
-                block_A(ind_i1,ind_j3) = block_A(ind_i1,ind_j3) +sum(sum(-w4.*(1-Ki_y).*(Kj_x)));
-                block_A(ind_i1+1,ind_j3+1) = block_A(ind_i1+1,ind_j3+1) +sum(sum(-w4.*(1-Ki_y).*(Kj_x)));
-                % Pi3 row
-                block_A(ind_i3,ind_i1) = block_A(ind_i3,ind_i1) + sum(sum(w4.*(1-Ki_y).*Ki_y));
-                block_A(ind_i3+1,ind_i1+1) = block_A(ind_i3+1,ind_i1+1) + sum(sum(w4.*(1-Ki_y).*Ki_y));
-                block_A(ind_i3,ind_i3) = block_A(ind_i3,ind_i3) +sum(sum(w4.*Ki_y.^2));
-                block_A(ind_i3+1,ind_i3+1) = block_A(ind_i3+1,ind_i3+1) +sum(sum(w4.*Ki_y.^2));
-                block_A(ind_i3,ind_j1) = block_A(ind_i3,ind_j1) +sum(sum(-w4.*(Ki_y).*(1-Kj_x)));
-                block_A(ind_i3+1,ind_j1+1) = block_A(ind_i3+1,ind_j1+1) +sum(sum(-w4.*(Ki_y).*(1-Kj_x)));
-                block_A(ind_i3,ind_j3) = block_A(ind_i3,ind_j3) +sum(sum(-w4.*(Ki_y).*(Kj_x)));
-                block_A(ind_i3+1,ind_j3+1) = block_A(ind_i3+1,ind_j3+1) +sum(sum(-w4.*(Ki_y).*(Kj_x)));
-
-                % Pj1 row
-                block_A(ind_j1,ind_i1) = block_A(ind_j1,ind_i1) + sum(sum(-w4.*(1-Ki_y).*(1-Kj_x)));
-                block_A(ind_j1+1,ind_i1+1) = block_A(ind_j1+1,ind_i1+1) + sum(sum(-w4.*(1-Ki_y).*(1-Kj_x)));
-                block_A(ind_j1,ind_i3) = block_A(ind_j1,ind_i3) +sum(sum(-w4.*Ki_y.*(1-Kj_x)));
-                block_A(ind_j1+1,ind_i3+1) = block_A(ind_j1+1,ind_i3+1) +sum(sum(-w4.*Ki_y.*(1-Kj_x)));
-                block_A(ind_j1,ind_j1) = block_A(ind_j1,ind_j1) +sum(sum(w4.*(1-Kj_x).*(1-Kj_x)));
-                block_A(ind_j1+1,ind_j1+1) = block_A(ind_j1+1,ind_j1+1) +sum(sum(w4.*(1-Kj_x).*(1-Kj_x)));
-                block_A(ind_j1,ind_j3) = block_A(ind_j1,ind_j3) +sum(sum(w4.*(1-Kj_x).*(Kj_x)));
-                block_A(ind_j1+1,ind_j3+1) = block_A(ind_j1+1,ind_j3+1) +sum(sum(w4.*(1-Kj_x).*(Kj_x)));
-                
-                % Pj3 row
-                block_A(ind_j3,ind_i1) = block_A(ind_j3,ind_i1) + sum(sum(-w4.*(1-Ki_y).*(Kj_x)));
-%                 block_A(ind_j3+1,ind_i1+1) = block_A(ind_j1+1,ind_i1+1) + sum(sum(-w4.*(1-Ki_y).*(Kj_x)));
-                block_A(ind_j3+1,ind_i1+1) = block_A(ind_j3+1,ind_i1+1) + sum(sum(-w4.*(1-Ki_y).*(Kj_x)));
-                block_A(ind_j3,ind_i3) = block_A(ind_j3,ind_i3) +sum(sum(-w4.*Ki_y.*(Kj_x)));
-                block_A(ind_j3+1,ind_i3+1) = block_A(ind_j3+1,ind_i3+1) +sum(sum(-w4.*Ki_y.*(Kj_x)));
-                block_A(ind_j3,ind_j1) = block_A(ind_j3,ind_j1) +sum(sum(w4.*(1-Kj_x).*(Kj_x)));
-                block_A(ind_j3+1,ind_j1+1) = block_A(ind_j3+1,ind_j1+1) +sum(sum(w4.*(1-Kj_x).*(Kj_x)));
-                block_A(ind_j3,ind_j3) = block_A(ind_j3,ind_j3) + sum(sum(w4.*Kj_x.^2));
-                block_A(ind_j3+1,ind_j3+1) = block_A(ind_j3+1,ind_j3+1) +sum(sum(w4.*Kj_x.^2));
-                                
-                block_B(ind_i1) = block_B(ind_i1) + sum(sum(w4.*dpk_x.*(1-Ki_y)));
-                block_B(ind_i1+1) = block_B(ind_i1+1) + sum(sum(w4.*dpk_y.*(1-Ki_y)));
-                block_B(ind_i3) = block_B(ind_i3) + sum(sum(w4.*dpk_x.*Ki_y));
-                block_B(ind_i3+1) = block_B(ind_i3+1) + sum(sum(w4.*dpk_y.*Ki_y));
-                block_B(ind_j1) = block_B(ind_j1) + sum(sum(-w4.*dpk_x.*(1-Kj_x)));
-                block_B(ind_j1+1) = block_B(ind_j1+1) + sum(sum(-w4.*dpk_y.*(1-Kj_x)));
-                block_B(ind_j3) = block_B(ind_j3) + sum(sum(-w4.*dpk_x.*Kj_x));
-                block_B(ind_j3+1) = block_B(ind_j3+1) +sum(sum(-w4.*dpk_y.*Kj_x));
+                    
+                    [Ki_x,Ki_y] = meshgrid(t_i);
+                    [Kj_x,Kj_y] = meshgrid(t_j);
+                    
+                    % Pi1 row
+                    block_A(ind_i1,ind_i1) = block_A(ind_i1,ind_i1) + sum(sum(w4.*(1-Ki_y).^2));
+                    block_A(ind_i1+1,ind_i1+1) = block_A(ind_i1+1,ind_i1+1) + sum(sum(w4.*(1-Ki_y).^2));
+                    block_A(ind_i1,ind_i3) = block_A(ind_i1,ind_i3) +sum(sum(w4.*Ki_y.*(1-Ki_y)));
+                    block_A(ind_i1+1,ind_i3+1) = block_A(ind_i1+1,ind_i3+1) +sum(sum(w4.*Ki_y.*(1-Ki_y)));
+                    block_A(ind_i1,ind_j1) = block_A(ind_i1,ind_j1) +sum(sum(-w4.*(1-Ki_y).*(1-Kj_x)));
+                    block_A(ind_i1+1,ind_j1+1) = block_A(ind_i1+1,ind_j1+1) +sum(sum(-w4.*(1-Ki_y).*(1-Kj_x)));
+                    block_A(ind_i1,ind_j3) = block_A(ind_i1,ind_j3) +sum(sum(-w4.*(1-Ki_y).*(Kj_x)));
+                    block_A(ind_i1+1,ind_j3+1) = block_A(ind_i1+1,ind_j3+1) +sum(sum(-w4.*(1-Ki_y).*(Kj_x)));
+                    % Pi3 row
+                    block_A(ind_i3,ind_i1) = block_A(ind_i3,ind_i1) + sum(sum(w4.*(1-Ki_y).*Ki_y));
+                    block_A(ind_i3+1,ind_i1+1) = block_A(ind_i3+1,ind_i1+1) + sum(sum(w4.*(1-Ki_y).*Ki_y));
+                    block_A(ind_i3,ind_i3) = block_A(ind_i3,ind_i3) +sum(sum(w4.*Ki_y.^2));
+                    block_A(ind_i3+1,ind_i3+1) = block_A(ind_i3+1,ind_i3+1) +sum(sum(w4.*Ki_y.^2));
+                    block_A(ind_i3,ind_j1) = block_A(ind_i3,ind_j1) +sum(sum(-w4.*(Ki_y).*(1-Kj_x)));
+                    block_A(ind_i3+1,ind_j1+1) = block_A(ind_i3+1,ind_j1+1) +sum(sum(-w4.*(Ki_y).*(1-Kj_x)));
+                    block_A(ind_i3,ind_j3) = block_A(ind_i3,ind_j3) +sum(sum(-w4.*(Ki_y).*(Kj_x)));
+                    block_A(ind_i3+1,ind_j3+1) = block_A(ind_i3+1,ind_j3+1) +sum(sum(-w4.*(Ki_y).*(Kj_x)));
+                    
+                    % Pj1 row
+                    block_A(ind_j1,ind_i1) = block_A(ind_j1,ind_i1) + sum(sum(-w4.*(1-Ki_y).*(1-Kj_x)));
+                    block_A(ind_j1+1,ind_i1+1) = block_A(ind_j1+1,ind_i1+1) + sum(sum(-w4.*(1-Ki_y).*(1-Kj_x)));
+                    block_A(ind_j1,ind_i3) = block_A(ind_j1,ind_i3) +sum(sum(-w4.*Ki_y.*(1-Kj_x)));
+                    block_A(ind_j1+1,ind_i3+1) = block_A(ind_j1+1,ind_i3+1) +sum(sum(-w4.*Ki_y.*(1-Kj_x)));
+                    block_A(ind_j1,ind_j1) = block_A(ind_j1,ind_j1) +sum(sum(w4.*(1-Kj_x).*(1-Kj_x)));
+                    block_A(ind_j1+1,ind_j1+1) = block_A(ind_j1+1,ind_j1+1) +sum(sum(w4.*(1-Kj_x).*(1-Kj_x)));
+                    block_A(ind_j1,ind_j3) = block_A(ind_j1,ind_j3) +sum(sum(w4.*(1-Kj_x).*(Kj_x)));
+                    block_A(ind_j1+1,ind_j3+1) = block_A(ind_j1+1,ind_j3+1) +sum(sum(w4.*(1-Kj_x).*(Kj_x)));
+                    
+                    % Pj3 row
+                    block_A(ind_j3,ind_i1) = block_A(ind_j3,ind_i1) + sum(sum(-w4.*(1-Ki_y).*(Kj_x)));
+                    %                 block_A(ind_j3+1,ind_i1+1) = block_A(ind_j1+1,ind_i1+1) + sum(sum(-w4.*(1-Ki_y).*(Kj_x)));
+                    block_A(ind_j3+1,ind_i1+1) = block_A(ind_j3+1,ind_i1+1) + sum(sum(-w4.*(1-Ki_y).*(Kj_x)));
+                    block_A(ind_j3,ind_i3) = block_A(ind_j3,ind_i3) +sum(sum(-w4.*Ki_y.*(Kj_x)));
+                    block_A(ind_j3+1,ind_i3+1) = block_A(ind_j3+1,ind_i3+1) +sum(sum(-w4.*Ki_y.*(Kj_x)));
+                    block_A(ind_j3,ind_j1) = block_A(ind_j3,ind_j1) +sum(sum(w4.*(1-Kj_x).*(Kj_x)));
+                    block_A(ind_j3+1,ind_j1+1) = block_A(ind_j3+1,ind_j1+1) +sum(sum(w4.*(1-Kj_x).*(Kj_x)));
+                    block_A(ind_j3,ind_j3) = block_A(ind_j3,ind_j3) + sum(sum(w4.*Kj_x.^2));
+                    block_A(ind_j3+1,ind_j3+1) = block_A(ind_j3+1,ind_j3+1) +sum(sum(w4.*Kj_x.^2));
+                    
+                    block_B(ind_i1) = block_B(ind_i1) + sum(sum(w4.*dpk_x.*(1-Ki_y)));
+                    block_B(ind_i1+1) = block_B(ind_i1+1) + sum(sum(w4.*dpk_y.*(1-Ki_y)));
+                    block_B(ind_i3) = block_B(ind_i3) + sum(sum(w4.*dpk_x.*Ki_y));
+                    block_B(ind_i3+1) = block_B(ind_i3+1) + sum(sum(w4.*dpk_y.*Ki_y));
+                    block_B(ind_j1) = block_B(ind_j1) + sum(sum(-w4.*dpk_x.*(1-Kj_x)));
+                    block_B(ind_j1+1) = block_B(ind_j1+1) + sum(sum(-w4.*dpk_y.*(1-Kj_x)));
+                    block_B(ind_j3) = block_B(ind_j3) + sum(sum(-w4.*dpk_x.*Kj_x));
+                    block_B(ind_j3+1) = block_B(ind_j3+1) +sum(sum(-w4.*dpk_y.*Kj_x));
                 elseif ( isequal(handles.all_handles{i}.type,'Point') || isequal(handles.all_handles{i}.type,'Closed_Cage')) && isequal(handles.all_handles{j}.type,'Curved') && i ~= j
                     %% relative position, point and cage handles
                     P1_b = handles.all_handles{j}.new_position(1,:);
                     P3_b = handles.all_handles{j}.new_position(3,:);
                     Pi_ = handles.all_handles{i}.new_position(1,:);
                     [bone_size,min_index] = min([sqrt((P1_b(1) - P3_b(1))^2 + (P1_b(2) - P3_b(2))^2) ...
-                                    sqrt((P1_b(1) - (P3_b(1)+2*pi))^2 + (P1_b(2) - P3_b(2))^2) ...
-                                    sqrt((P1_b(1) - (P3_b(1)-2*pi))^2 + (P1_b(2) - P3_b(2))^2)]);
+                        sqrt((P1_b(1) - (P3_b(1)+2*pi))^2 + (P1_b(2) - P3_b(2))^2) ...
+                        sqrt((P1_b(1) - (P3_b(1)-2*pi))^2 + (P1_b(2) - P3_b(2))^2)]);
                     ind_i = 0;
                     ind_j1 = 0;
                     ind_j2 = 0;
                     ind_j3 = 0;
                     for l = 1:length(solution_index)
-                        if ~isempty(intersect(solution_index{l},[i 1],'rows'))
+                        if norm([i 1]-solution_index{l})==0
                             ind_i = l;
                             break
                         end
                     end
                     for l = 1:length(solution_index)
-                        if ~isempty(intersect(solution_index{l},[j 1],'rows'))
+                        if norm([j 1]-solution_index{l})==0
                             ind_j1 = l;
                         end
-                        if ~isempty(intersect(solution_index{l},[j 2],'rows'))
+                        if norm([j 2]-solution_index{l})==0
                             ind_j2 = l;
                         end
-                        if ~isempty(intersect(solution_index{l},[j 3],'rows'))
+                        if norm([j 3]-solution_index{l})==0
                             ind_j3 = l;
                         end
                     end
@@ -1260,23 +1245,23 @@ switch get(hObject,'Value')
                     ind_j1 = 2*(ind_j1-1)+1;
                     ind_j2 = 2*(ind_j2-1)+1;
                     ind_j3 = 2*(ind_j3-1)+1;
-
+                    
                     [Pos_k,t_k] = compute_bone_discretization(handles.all_handles{j},handles.T_coefs(j,:));
                     
-					switch min_index
+                    switch min_index
                         case 1
                             dist_P_k = sqrt((Pi_(1) - Pos_k(:,1)).^2 + (Pi_(2) - Pos_k(:,2)).^2);
                         case 2
                             dist_P_k = sqrt((Pi_(1) - Pos_k(:,1)).^2 + (Pi_(2) - Pos_k(:,2)).^2);
                         case 3
                             dist_P_k = sqrt((Pi_(1) - Pos_k(:,1)).^2 + (Pi_(2) - Pos_k(:,2)).^2);
-
+                            
                     end
-                    w4 = kumaraswamy(dist_P_k,1,5,bone_size/2,0);
-                    dpk_x = Pi_(1) - Pos_k(:,1); 
+                    w4 = 0.5*kumaraswamy(dist_P_k,1,5,bone_size/4,0);
+                    dpk_x = Pi_(1) - Pos_k(:,1);
                     dpk_y = Pi_(2) - Pos_k(:,2);
                     %Pi line
-					block_A(ind_i,ind_i) = block_A(ind_i,ind_i) + sum(w4);
+                    block_A(ind_i,ind_i) = block_A(ind_i,ind_i) + sum(w4);
                     block_A(ind_i+1,ind_i+1) = block_A(ind_i+1,ind_i+1) + sum(w4);
                     block_A(ind_i,ind_j1) = block_A(ind_i,ind_j1) + sum(w4.*(t_k - 1));
                     block_A(ind_i+1,ind_j1+1) = block_A(ind_i+1,ind_j1+1) + sum(w4.*(t_k - 1));
@@ -1296,20 +1281,27 @@ switch get(hObject,'Value')
                     block_A(ind_j3+1,ind_j1+1) = block_A(ind_j3+1,ind_j1+1) + sum(w4.*t_k.*(1 - t_k));
                     block_A(ind_j3,ind_j3) = block_A(ind_j3,ind_j3) + sum(w4.*t_k.^2);
                     block_A(ind_j3+1,ind_j3+1) = block_A(ind_j3+1,ind_j3+1) + sum(w4.*t_k.^2);
-
+                    
                     block_B(ind_i) = block_B(ind_i) + sum(w4.*dpk_x);
                     block_B(ind_i+1) = block_B(ind_i+1) + sum(w4.*dpk_y);
                     block_B(ind_j1) = block_B(ind_j1) + sum(w4.*(t_k-1).*dpk_x);
                     block_B(ind_j1+1) = block_B(ind_j1+1) + sum(w4.*(t_k-1).*dpk_y);
                     block_B(ind_j3) = block_B(ind_j3) - sum(w4.*t_k.*dpk_x);
                     block_B(ind_j3+1) = block_B(ind_j3+1) - sum(w4.*t_k.*dpk_y);
-
+                    
                 end
             end
         end
+        disp('relative position constraints time')
+        toc
+        tic
         if ~isempty(block_B)
             solution = block_A\block_B;
         end
+        disp('relative position linear system time')
+        toc
+        
+        tic
         if ~isempty(solution)
             solution = reshape(solution,[2,size(solution,1)*size(solution,2)/2])';
             for i = 1:length(solution_index)
@@ -1326,7 +1318,7 @@ switch get(hObject,'Value')
                         handles.all_handles{ind_1}.new_position(2,:) = P2_n;
                         handles.all_handles{ind_1}.new_position(3,:) = P3_n;
                     elseif  isequal(handles.all_handles{ind_1}.type,'Closed_Cage')
-                                                xlength = handles.all_handles{ind_1}.new_position(2,1) - handles.all_handles{ind_1}.new_position(1,1);
+                        xlength = handles.all_handles{ind_1}.new_position(2,1) - handles.all_handles{ind_1}.new_position(1,1);
                         ylength = handles.all_handles{ind_1}.new_position(2,2) - handles.all_handles{ind_1}.new_position(1,2);
                         handles.all_handles{ind_1}.new_position(ind_2,:) = solution(i,:);
                         P1_n = handles.all_handles{ind_1}.new_position(1,:);
@@ -1335,7 +1327,7 @@ switch get(hObject,'Value')
                         handles.all_handles{ind_1}.new_position(2,:) = P2_n;
                         handles.all_handles{ind_1}.new_position(3,:) = P3_n;
                         handles.T_coefs(ind_1,:) = Calculate_Transformation(handles.all_handles{ind_1}.position,handles.all_handles{ind_1}.new_position);
-
+                        
                         index = find(handles.handle_to_edge_list(:,1) == ind_1);
                         for k=1:length(index)
                             id1 = handles.cage_edge_list{handles.handle_to_edge_list(index(k),2)}.index(1);
@@ -1359,38 +1351,40 @@ switch get(hObject,'Value')
                 handles.all_handles{i}.new_mesh_position = apply_transf_plot(handles.all_handles{i}.mesh_position,'Curved',handles.T_coefs(i,:),1);
             end
         end
-handles.matlabImage = biharmonic_moebius_sphere(handles.originalimage,handles,[handles.imagesize(1) handles.imagesize(2)]);
-
+        disp('handle transformation time')
+        toc
+        handles.matlabImage = biharmonic_moebius_sphere(handles.originalimage,handles,[handles.imagesize(1) handles.imagesize(2)]);
+        
         axes(handles.image)
         cla
-
+        
         handles.img_handle = image(handles.matlabImage);
         hold on
         
         handles.handles_plot = {};
         handles.cages_plot = {};
-for k = 1:length(handles.cage_edge_list)
-        equi_coord_par = handles.cage_edge_list{k}.new_position;
-                deriv = diff(equi_coord_par(:,1));
-                index = find(abs(deriv) > 0.1);
-                index = sort(index);
-                equi_coord_par_pix = equi2pixels(equi_coord_par,handles.imagesize);
-                if ~isempty(index)
-                    inicio = index(1);
-                    fim = index(length(index))+1;
-                    X1 = equi_coord_par_pix(1:inicio,1);
-                    Y1 = equi_coord_par_pix(1:inicio,2);
-                    X2 = equi_coord_par_pix(fim:100,1);
-                    Y2 = equi_coord_par_pix(fim:100,2);
-                    f = plot(X1,Y1,'Color',[1 1 1],'Parent', handles.image);
-                    f2 = plot(X2,Y2,'Color',[1 1 1],'Parent', handles.image);
-                    handles.cages_plot{end+1} = f;
-                    handles.cages_plot{end+1} = f2;
-                else
-                    f = plot(equi_coord_par_pix(:,1), equi_coord_par_pix(:,2),'Color',[1 1 1],'Parent', handles.image);
-                    handles.cages_plot{end+1} = f;
-                end
+        for k = 1:length(handles.cage_edge_list)
+            equi_coord_par = handles.cage_edge_list{k}.new_position;
+            deriv = diff(equi_coord_par(:,1));
+            index = find(abs(deriv) > 0.1);
+            index = sort(index);
+            equi_coord_par_pix = equi2pixels(equi_coord_par,handles.imagesize);
+            if ~isempty(index)
+                inicio = index(1);
+                fim = index(length(index))+1;
+                X1 = equi_coord_par_pix(1:inicio,1);
+                Y1 = equi_coord_par_pix(1:inicio,2);
+                X2 = equi_coord_par_pix(fim:100,1);
+                Y2 = equi_coord_par_pix(fim:100,2);
+                f = plot(X1,Y1,'Color',[1 1 1],'Parent', handles.image);
+                f2 = plot(X2,Y2,'Color',[1 1 1],'Parent', handles.image);
+                handles.cages_plot{end+1} = f;
+                handles.cages_plot{end+1} = f2;
+            else
+                f = plot(equi_coord_par_pix(:,1), equi_coord_par_pix(:,2),'Color',[1 1 1],'Parent', handles.image);
+                handles.cages_plot{end+1} = f;
             end
+        end
         for j= 1:handles.num_of_handles
             pix_pos = equi2pixels(handles.all_handles{j}.new_position,handles.imagesize);
             if isequal(handles.all_handles{j}.type,'Curved')
@@ -1446,7 +1440,7 @@ for k = 1:length(handles.cage_edge_list)
                 set(handles.handles_plot{j}{2},'ButtonDownFcn',{@selectpoint,handles})
                 set(handles.handles_plot{j}{3},'ButtonDownFcn',{@selectpoint,handles})
             elseif isequal(handles.all_handles{j}.type,'Closed_Cage')
-                f = plot(pix_pos(1,1),pix_pos(1,2),'o','MarkerFaceColor',[0.79 0 0.125],'MarkerEdgeColor',[0.25 0.25 0.25],'MarkerSize',5,'Parent',handles.image);
+                f = plot(pix_pos(1,1),pix_pos(1,2),'o','MarkerFaceColor',[1 1 1],'MarkerEdgeColor',[0.25 0.25 0.25],'MarkerSize',5,'Parent',handles.image);
                 handles.handles_plot{j} = f;
                 set(handles.handles_plot{j},'UserData',[j 1]);
                 set(handles.handles_plot{j},'ButtonDownFcn',{@selectpoint,handles})
@@ -1704,8 +1698,8 @@ if ~isempty(handles.current_handle)
                                     if dist(k,l) < bone_size/2
                                         ind_i = 0;
                                         ind_j = 0;
-
-                                        w4 = 5*kumaraswamy(dist(k,l),1,5,bone_size/2,0);
+                                        
+                                        w4 = 0.01*kumaraswamy(dist(k,l),1,5,bone_size/4,0);
                                         for m = 1:length(solution_index)
                                             if ~isempty(intersect(solution_index{m},[i 2*(k-1)+1],'rows'))
                                                 ind_i = m;
@@ -1757,8 +1751,8 @@ if ~isempty(handles.current_handle)
                                     if dist(k,l) < bone_size/2
                                         ind_i = 0;
                                         ind_j = 0;
-
-                                        w4 = 5*kumaraswamy(dist(k,l),1,5,bone_size/2,0);
+                                        
+                                        w4 = 0.01*kumaraswamy(dist(k,l),1,5,bone_size/4,0);
                                         for m = 1:length(solution_index)
                                             if ~isempty(intersect(solution_index{m},[i k],'rows'))
                                                 ind_i = m;
@@ -1802,8 +1796,8 @@ if ~isempty(handles.current_handle)
                                 if dist(k) < bone_size/2
                                     ind_i = 0;
                                     ind_j = 0;
-
-                                    w4 = 5*kumaraswamy(dist(k),1,5,bone_size/2,0);
+                                    
+                                    w4 = 0.01*kumaraswamy(dist(k),1,5,bone_size/4,0);
                                     for l = 1:length(solution_index)
                                         if ~isempty(intersect(solution_index{l},[i 1],'rows'))
                                             ind_i = l;
@@ -1856,25 +1850,25 @@ if ~isempty(handles.current_handle)
                                 handles.all_handles{ind_1}.new_position(2,:) = P2_n;
                                 handles.all_handles{ind_1}.new_position(3,:) = P3_n;
                             elseif  isequal(handles.all_handles{ind_1}.type,'Closed_Cage')
-                                    xlength = handles.all_handles{ind_1}.new_position(2,1) - handles.all_handles{ind_1}.new_position(1,1);
-                        ylength = handles.all_handles{ind_1}.new_position(2,2) - handles.all_handles{ind_1}.new_position(1,2);
-                        handles.all_handles{ind_1}.new_position(ind_2,:) = solution(i,:);
-                        P1_n = handles.all_handles{ind_1}.new_position(1,:);
-                        P2_n = [P1_n(1)+xlength P1_n(2)+ylength];
-                        P3_n = [P1_n(1)-xlength P1_n(2)-ylength];
-                        handles.all_handles{ind_1}.new_position(2,:) = P2_n;
-                        handles.all_handles{ind_1}.new_position(3,:) = P3_n;
-                        handles.T_coefs(ind_1,:) = Calculate_Transformation(handles.all_handles{ind_1}.position,handles.all_handles{ind_1}.new_position);
-
-                        index = find(handles.handle_to_edge_list(:,1) == ind_1);
-                        for k=1:length(index)
-                            id1 = handles.cage_edge_list{handles.handle_to_edge_list(index(k),2)}.index(1);
-                            id2 = handles.cage_edge_list{handles.handle_to_edge_list(index(k),2)}.index(2);
-                            transf = [handles.T_coefs(id1,:);handles.T_coefs(id2,:)];
-                            t = linspace(0,1,100);
-                            Weight = [(1-t)' t'];
-                            handles.cage_edge_list{handles.handle_to_edge_list(index(k),2)}.new_position = apply_transf_plot(handles.cage_edge_list{handles.handle_to_edge_list(index(k),2)}.position,'Closed_Cage',transf,Weight);
-                        end
+                                xlength = handles.all_handles{ind_1}.new_position(2,1) - handles.all_handles{ind_1}.new_position(1,1);
+                                ylength = handles.all_handles{ind_1}.new_position(2,2) - handles.all_handles{ind_1}.new_position(1,2);
+                                handles.all_handles{ind_1}.new_position(ind_2,:) = solution(i,:);
+                                P1_n = handles.all_handles{ind_1}.new_position(1,:);
+                                P2_n = [P1_n(1)+xlength P1_n(2)+ylength];
+                                P3_n = [P1_n(1)-xlength P1_n(2)-ylength];
+                                handles.all_handles{ind_1}.new_position(2,:) = P2_n;
+                                handles.all_handles{ind_1}.new_position(3,:) = P3_n;
+                                handles.T_coefs(ind_1,:) = Calculate_Transformation(handles.all_handles{ind_1}.position,handles.all_handles{ind_1}.new_position);
+                                
+                                index = find(handles.handle_to_edge_list(:,1) == ind_1);
+                                for k=1:length(index)
+                                    id1 = handles.cage_edge_list{handles.handle_to_edge_list(index(k),2)}.index(1);
+                                    id2 = handles.cage_edge_list{handles.handle_to_edge_list(index(k),2)}.index(2);
+                                    transf = [handles.T_coefs(id1,:);handles.T_coefs(id2,:)];
+                                    t = linspace(0,1,100);
+                                    Weight = [(1-t)' t'];
+                                    handles.cage_edge_list{handles.handle_to_edge_list(index(k),2)}.new_position = apply_transf_plot(handles.cage_edge_list{handles.handle_to_edge_list(index(k),2)}.position,'Closed_Cage',transf,Weight);
+                                end
                             else
                                 handles.all_handles{ind_1}.new_position(ind_2,:) = solution(i,:);
                             end
@@ -1883,7 +1877,7 @@ if ~isempty(handles.current_handle)
                     for i = 1:handles.num_of_handles
                         for j = 1:3
                             if handles.all_handles{i}.new_position(j,1) > pi
-                               handles.all_handles{i}.new_position(j,1) = handles.all_handles{i}.new_position(j,1) - 2*pi;
+                                handles.all_handles{i}.new_position(j,1) = handles.all_handles{i}.new_position(j,1) - 2*pi;
                             elseif handles.all_handles{i}.new_position(j,1) < -pi
                                 handles.all_handles{i}.new_position(j,1) = handles.all_handles{i}.new_position(j,1) + 2*pi;
                             end
@@ -1896,8 +1890,8 @@ if ~isempty(handles.current_handle)
                         handles.all_handles{i}.new_mesh_position = apply_transf_plot(handles.all_handles{i}.mesh_position,'Curved',handles.T_coefs(i,:),1);
                     end
                 end
-handles.matlabImage = biharmonic_moebius_sphere(handles.originalimage,handles,[handles.imagesize(1) handles.imagesize(2)]);
-
+                handles.matlabImage = biharmonic_moebius_sphere(handles.originalimage,handles,[handles.imagesize(1) handles.imagesize(2)]);
+                
                 axes(handles.image)
                 cla
                 handles.img_handle = image(handles.matlabImage);
@@ -1905,28 +1899,28 @@ handles.matlabImage = biharmonic_moebius_sphere(handles.originalimage,handles,[h
                 
                 handles.handles_plot = {};
                 handles.cages_plot = {};
-for k = 1:length(handles.cage_edge_list)
-        equi_coord_par = handles.cage_edge_list{k}.new_position;
-                        deriv = diff(equi_coord_par(:,1));
-                        index = find(abs(deriv) > 0.1);
-                        index = sort(index);
-                        equi_coord_par_pix = equi2pixels(equi_coord_par,handles.imagesize);
-                        if ~isempty(index)
-                            inicio = index(1);
-                            fim = index(length(index))+1;
-                            X1 = equi_coord_par_pix(1:inicio,1);
-                            Y1 = equi_coord_par_pix(1:inicio,2);
-                            X2 = equi_coord_par_pix(fim:100,1);
-                            Y2 = equi_coord_par_pix(fim:100,2);
-                            f = plot(X1,Y1,'Color',[1 1 1],'Parent', handles.image);
-                            f2 = plot(X2,Y2,'Color',[1 1 1],'Parent', handles.image);
-                            handles.cages_plot{end+1} = f;
-                            handles.cages_plot{end+1} = f2;
-                        else
-                            f = plot(equi_coord_par_pix(:,1), equi_coord_par_pix(:,2),'Color',[1 1 1],'Parent', handles.image);
-                            handles.cages_plot{end+1} = f;
-                        end
+                for k = 1:length(handles.cage_edge_list)
+                    equi_coord_par = handles.cage_edge_list{k}.new_position;
+                    deriv = diff(equi_coord_par(:,1));
+                    index = find(abs(deriv) > 0.1);
+                    index = sort(index);
+                    equi_coord_par_pix = equi2pixels(equi_coord_par,handles.imagesize);
+                    if ~isempty(index)
+                        inicio = index(1);
+                        fim = index(length(index))+1;
+                        X1 = equi_coord_par_pix(1:inicio,1);
+                        Y1 = equi_coord_par_pix(1:inicio,2);
+                        X2 = equi_coord_par_pix(fim:100,1);
+                        Y2 = equi_coord_par_pix(fim:100,2);
+                        f = plot(X1,Y1,'Color',[1 1 1],'Parent', handles.image);
+                        f2 = plot(X2,Y2,'Color',[1 1 1],'Parent', handles.image);
+                        handles.cages_plot{end+1} = f;
+                        handles.cages_plot{end+1} = f2;
+                    else
+                        f = plot(equi_coord_par_pix(:,1), equi_coord_par_pix(:,2),'Color',[1 1 1],'Parent', handles.image);
+                        handles.cages_plot{end+1} = f;
                     end
+                end
                 for j= 1:handles.num_of_handles
                     pix_pos = equi2pixels(handles.all_handles{j}.new_position,handles.imagesize);
                     if isequal(handles.all_handles{j}.type,'Curved')
@@ -1982,7 +1976,7 @@ for k = 1:length(handles.cage_edge_list)
                         set(handles.handles_plot{j}{2},'ButtonDownFcn',{@selectpoint,handles})
                         set(handles.handles_plot{j}{3},'ButtonDownFcn',{@selectpoint,handles})
                     elseif isequal(handles.all_handles{j}.type,'Closed_Cage')
-                        f = plot(pix_pos(1,1),pix_pos(1,2),'o','MarkerFaceColor',[0.79 0 0.125],'MarkerEdgeColor',[0.25 0.25 0.25],'MarkerSize',5,'Parent',handles.image);
+                        f = plot(pix_pos(1,1),pix_pos(1,2),'o','MarkerFaceColor',[1 1 1],'MarkerEdgeColor',[0.25 0.25 0.25],'MarkerSize',5,'Parent',handles.image);
                         handles.handles_plot{j} = f;
                         set(handles.handles_plot{j},'UserData',[j 1]);
                         set(handles.handles_plot{j},'ButtonDownFcn',{@selectpoint,handles})

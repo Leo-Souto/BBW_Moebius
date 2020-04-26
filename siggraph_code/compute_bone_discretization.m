@@ -1,5 +1,5 @@
 function [Position, t_value] = compute_bone_discretization(handle,Transf)
-% This function return the actual position and proportion of a
+% This function returna the position and proportion of a
 % discretization of a bone handle
 
 a = Transf(1);

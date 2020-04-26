@@ -1,4 +1,4 @@
-Matlab source code for SIGGRAPH Submission ID 432
+Matlab source code for SGP 2020 Submission ID 1026
 Handling conflicts on the sphere with Moebius transformations
 
 System Requirements
@@ -13,28 +13,16 @@ Installation instructions
 
 Using the User interface
 - On Matlab's command window, issue the following command:
-run mesh_interface.m
-- Choose the quality of the mesh by changing the quality slider
-- Press next
-- Load the image and add the desired handles by left-clicking over the image
+run biharmonic_interface.m
+- Load the image and add the desired handles by left-clicking over the image. Note: some users have experienced misplacement of handles when they click on the image. This problem is solved by maximizing the window.
 - To finish a closed cage handle right-click the image
-- To add a conformal region, click in the image and drag the cross over the region
-- Press next to compute the BBW
-- Check if weights are good as desired
-- Press next
+- Press next 
+- Rectify all lines by clicking in rectify lines or
+- Rectify current line by clicking in rectify current line or
 - Select control point by clicking over it (including point handle arrows)
 - Change control point position by clicking over the image
 - Undo the selected control point transformation by clicking in the respective button
-- Rectify all lines by clicking in rectify lines
-- Rectify current line by clicking in rectify current line
 - Click save image to generate the final result
-
-
-Some known bugs that will be fixed in the future
-- Sometimes the mesh created lack points on the poles, change slightly the quality slider to correct
-- The delete handle button is not working properly with closed cage handles
-- Sometimes the middle point of bone handles disappear after rectification
-
 
 This code has been tested in the following settings:
 - Linux (Ubuntu 15.10) with Matlab 2014a
