@@ -1,9 +1,20 @@
-## Welcome to GitHub Pages
+## Bounded biharmonic blending of Möbius transformations for flexible omnidirectional image rectification
 
-![Image](https://raw.githubusercontent.com/Leo-Souto/BBW_Moebius/gh-pages/graphical_abstract.png)
 <img src="https://raw.githubusercontent.com/Leo-Souto/BBW_Moebius/gh-pages/graphical_abstract.png" width="100%"/>
 You can use the [editor on GitHub](https://github.com/Leo-Souto/BBW_Moebius/edit/gh-pages/index.md) to maintain and preview the content for your website in Markdown files.
 
+### Authors
+Leonardo Souto Ferreira (a,b), Leonardo Koller Sacht (a)
+a UFSC - Universidade Federal de Santa Catarina - Campus Universitório Trindade, Florianópolis 8804-900, Brazil
+b UNESP - Universidade Estadual Paulista Júlio de Mesquita Filho, IFT - Instituto de Física Teórica, Rua Dr. Bento Teobaldo Ferraz, 271 - Bloco II - Vórzea da Barra Funda, São Paulo 01140-070, Brazil
+
+### Highlights
+<mark>
+- Spherical imaging benefits from linear blend skinning with Möbius transformations.
+- Our method corrects conflicting distortions in 360 degree images.
+- All user specified lines in the scene appear straight in the result.
+- Objects appear with low conformal distortion in the final image.
+- The user can edit the result through different effects in an intuitive interface.</mark>
 Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
 
 ### Markdown
