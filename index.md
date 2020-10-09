@@ -6,6 +6,8 @@
 1. UFSC - Universidade Federal de Santa Catarina - Campus Universitório Trindade, Florianópolis 8804-900, Brazil
 2. UNESP - Universidade Estadual Paulista Júlio de Mesquita Filho, IFT - Instituto de Física Teórica, Rua Dr. Bento Teobaldo Ferraz, 271 - Bloco II - Vórzea da Barra Funda, São Paulo 01140-070, Brazil
 
+[https://doi.org/10.1016/j.cag.2020.09.011](https://doi.org/10.1016/j.cag.2020.09.011)
+
 ## Highlights
 - Spherical imaging benefits from linear blend skinning with Möbius transformations.
 - Our method corrects conflicting distortions in 360 degree images.
