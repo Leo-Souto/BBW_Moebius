@@ -2,9 +2,10 @@
 You can use the [editor on GitHub](https://github.com/Leo-Souto/BBW_Moebius/edit/gh-pages/index.md) to maintain and preview the content for your website in Markdown files.
 
 ## Authors
-Leonardo Souto Ferreira (a,b), Leonardo Koller Sacht (a)
-a UFSC - Universidade Federal de Santa Catarina - Campus Universitório Trindade, Florianópolis 8804-900, Brazil
-b UNESP - Universidade Estadual Paulista Júlio de Mesquita Filho, IFT - Instituto de Física Teórica, Rua Dr. Bento Teobaldo Ferraz, 271 - Bloco II - Vórzea da Barra Funda, São Paulo 01140-070, Brazil
+Leonardo Souto Ferreira (1,2), Leonardo Koller Sacht (1)
+
+1. UFSC - Universidade Federal de Santa Catarina - Campus Universitório Trindade, Florianópolis 8804-900, Brazil
+2. UNESP - Universidade Estadual Paulista Júlio de Mesquita Filho, IFT - Instituto de Física Teórica, Rua Dr. Bento Teobaldo Ferraz, 271 - Bloco II - Vórzea da Barra Funda, São Paulo 01140-070, Brazil
 
 ## Highlights
 - Spherical imaging benefits from linear blend skinning with Möbius transformations.
