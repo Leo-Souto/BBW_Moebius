@@ -1,7 +1,7 @@
 ## Welcome to GitHub Pages
 
-![Image](https://raw.githubusercontent.com/Leo-Souto/BBW_Moebius/gh-pages/graphical_abstract.png){ width=100% }
-
+![Image](https://raw.githubusercontent.com/Leo-Souto/BBW_Moebius/gh-pages/graphical_abstract.png)
+<img src="https://raw.githubusercontent.com/Leo-Souto/BBW_Moebius/gh-pages/graphical_abstract.png" width="100%"/>
 You can use the [editor on GitHub](https://github.com/Leo-Souto/BBW_Moebius/edit/gh-pages/index.md) to maintain and preview the content for your website in Markdown files.
 
 Whenever you commit to this repository, GitHub Pages will run [Jekyll](https://jekyllrb.com/) to rebuild the pages in your site, from the content in your Markdown files.
