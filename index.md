@@ -13,34 +13,6 @@
 - Objects appear with low conformal distortion in the final image.
 - The user can edit the result through different effects in an intuitive interface.
 
-### Markdown
+## Abstract
 
-Markdown is a lightweight and easy-to-use syntax for styling your writing. It includes conventions for
-
-```markdown
-Syntax highlighted code block
-
-# Header 1
-## Header 2
-### Header 3
-
-- Bulleted
-- List
-
-1. Numbered
-2. List
-
-**Bold** and _Italic_ and `Code` text
-
-[Link](url) and ![Image](src)
-```
-
-For more details see [GitHub Flavored Markdown](https://guides.github.com/features/mastering-markdown/).
-
-### Jekyll Themes
-
-Your Pages site will use the layout and styles from the Jekyll theme you have selected in your [repository settings](https://github.com/Leo-Souto/BBW_Moebius/settings). The name of this theme is saved in the Jekyll `_config.yml` configuration file.
-
-### Support or Contact
-
-Having trouble with Pages? Check out our [documentation](https://docs.github.com/categories/github-pages-basics/) or [contact support](https://github.com/contact) and we’ll help you sort it out.
+We propose a new method to correct distortions in equirectangular images, i.e., images that use the longitude/latitude representation to describe the full spherical field of view around a given viewpoint. We show that Möbius transformations are the correct mathematical tool to deal with the conflicting distortions in this setting: they are conformal, are able to rectify lines, perform rotations, translations and scales on the sphere and are bijective. Multiple transformations are specified through points, lines and cages on the sphere. We associate three points that uniquely define a Möbius transformation to each one of these geometric handles. Linear blend skinning with bounded biharmonic weights combine the different transformations into a single full spherical modified image. We present a collection of results in challenging settings and show that our method is more flexible and produces higher quality results when compared to previous methods.
