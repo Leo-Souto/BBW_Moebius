@@ -19,14 +19,17 @@
 We propose a new method to correct distortions in equirectangular images, i.e., images that use the longitude/latitude representation to describe the full spherical field of view around a given viewpoint. We show that Möbius transformations are the correct mathematical tool to deal with the conflicting distortions in this setting: they are conformal, are able to rectify lines, perform rotations, translations and scales on the sphere and are bijective. Multiple transformations are specified through points, lines and cages on the sphere. We associate three points that uniquely define a Möbius transformation to each one of these geometric handles. Linear blend skinning with bounded biharmonic weights combine the different transformations into a single full spherical modified image. We present a collection of results in challenging settings and show that our method is more flexible and produces higher quality results when compared to previous methods.
 
 ## Files
+#### Code
+Stable version <a href="BBW_Moebius-master.zip" download>Here</a>. For most recent version, please check our github.
 #### Article
 [https://doi.org/10.1016/j.cag.2020.09.011](https://doi.org/10.1016/j.cag.2020.09.011)
+#### Supplementary material
+PDF <a href="BBW_Moebius-supplementary.pdf" download>Here</a>.
+Video coming soon.
 #### Pre-print
-<a href="Preprint_SoutoFerreira_Sacht_2020_compressed.pdf" download>Here</a>
+<a href="Preprint_SoutoFerreira_Sacht_2020_compressed.pdf" download>Here.</a>
 #### Video presentation
 Full version
 <iframe width="560" height="315" src="https://www.youtube.com/embed/c3qYex1cYgQ" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 Short version
 <iframe width="560" height="315" src="https://www.youtube.com/embed/I0DN2tSGV9A" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
-#### Supplementary material
-Soon
