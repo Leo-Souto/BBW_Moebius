@@ -22,8 +22,11 @@ We propose a new method to correct distortions in equirectangular images, i.e., 
 #### Article
 [https://doi.org/10.1016/j.cag.2020.09.011](https://doi.org/10.1016/j.cag.2020.09.011)
 #### Pre-print
-Soon
+<a href="Preprint_SoutoFerreira_Sacht_2020_compressed.pdf" download>Here</a>
 #### Video presentation
-Soon
+Full version
+<iframe width="560" height="315" src="https://www.youtube.com/embed/c3qYex1cYgQ" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+Short version
+<iframe width="560" height="315" src="https://www.youtube.com/embed/I0DN2tSGV9A" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
 #### Supplementary material
 Soon
